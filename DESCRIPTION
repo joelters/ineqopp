@@ -1,0 +1,39 @@
+Package: ineqopp
+Title: Plug in and Debiased estimates of Inequality of Opportunity
+Version: 1.0.0
+Authors@R: 
+    person("Joël", "Terschuur", , "joelrt2310@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-9997-9954"))
+Description: Estimates Inequality of Opportunity (IOp) in several ways. Debiased IOp
+  estimates can be computed using any Machine Learner among: Lasso, Ridge, Random Forest, Conditional
+  Inferest Forest, Extreme Gradient Boosting, Catboosting or some combination
+  of these five machine learners. Plug in estimates can also be computed estimating the
+  fitted values with a log linear regression, non-parametrically (for discrete circumstances)
+  or with any of the aforementioned machine learners. Debiased partial effects can
+  also be computed. The package includes a survey with income and circumstances for
+  Madrid in 2018 (from Encuesta de Condiciones de vida (ECV) 2019).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Depends: 
+    R (>= 2.10)
+LazyData: true
+Imports: 
+    acid,
+    dplyr,
+    glmnet,
+    hyperSMURF,
+    matrixStats,
+    ML,
+    parallel,
+    party,
+    plyr,
+    ranger,
+    stats,
+    SuperLearner
+Suggests: 
+    catboost,
+    testthat (>= 3.0.0),
+    xgboost
+Config/testthat/edition: 3
