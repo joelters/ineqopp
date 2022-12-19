@@ -58,9 +58,7 @@ where the fitted values are estimated by a log-linear regression,
 non-parametrically and by any machine learner among Lasso, Ridge,
 Random Forest, Conditional Inference Forest, Extreme Gradient
 Boosting, Catboosting or a (cross-validated) optimal combination of any
-of these using the SuperLearner package. The (optional) standard errors of all these
-options can be computed using bootstrap although validity of bootstrap
-has not been proven for IOp. Debiased estimates based on the aforementioned
+of these using the SuperLearner package. Debiased estimates based on the aforementioned
 machine learners can also be computed with this function. In this case the
 (optional) standard errors are derived analytically and backed by inferential
 theory. A measure of partial effects and its standard errors for the debiased
@@ -119,4 +117,7 @@ iop_deb <- IOp(Y,
 Escanciano, J. C., & Terschuur, J. R. (2022).
 Debiased Semiparametric U-Statistics: Machine Learning Inference
 on Inequality of Opportunity. arXiv preprint arXiv:2206.05235.
+
+Terschuur, J. (2022). Debiased Machine Learning Inequality
+of Opportunity in Europe. arXiv preprint arXiv:2212.02407.
 }
