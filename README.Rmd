@@ -1,4 +1,4 @@
-The goal of ineqopp is to provide estimates of Inequality of Opportunity (IOp)
+The goal of ineqopp is to provide estimates and tests for Inequality of Opportunity (IOp)
 using several methods. Debiased IOp estimates can be computed using any Machine
 Learner among: Lasso, Ridge, Random Forest, Conditional Inferest Forest, Extreme
 Gradient Boosting, Catboosting or some combination of these five machine learners.
