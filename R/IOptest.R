@@ -44,6 +44,9 @@
 #' @references Escanciano, J. C., & Terschuur, J. R. (2022).
 #' Debiased Semiparametric U-Statistics: Machine Learning Inference
 #' on Inequality of Opportunity. arXiv preprint arXiv:2206.05235.
+#'
+#' Terschuur, J. (2022). Debiased Machine Learning Inequality
+#' of Opportunity in Europe. arXiv preprint arXiv:2212.02407.
 #' @export
 IOptest <- function(iop_a, iop_b, se_a, se_b){
   th <- iop_a - iop_b
