@@ -15,7 +15,9 @@ You can install the development version of ineqopp from [GitHub](https://github.
 ``` r
 # install devtools if not installed
 install.packages("devtools")
-# install ML from github
+# First install ML from github (if not installed)
+devtools::install_github("joelters/ML")
+# Then install the ineqopp package
 devtools::install_github("joelters/ineqopp")
 ```
 There are four main functions, IOp, peffect, IOptest and IOpgrouptest. IOp provides IOp estimates, peffect provides debiased IOp partial effects, IOptest tests for equality of IOp between two populations
