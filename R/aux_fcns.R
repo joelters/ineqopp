@@ -474,7 +474,8 @@ peffect_aux <- function(Y,
 
 SP <- function(df, npart){
   nn <- nrow(df)
-  p <- hyperSMURF::do.random.partition(nn, npart, seed = 0)
+  p <- base::split(sample(nn,nn,replace = FALSE),as.factor(1:npart))
+  # p <- hyperSMURF::do.random.partition(nn, npart, seed = 0)
   dfsp <- NULL
   for (i in 1:npart){
     dfsp[[i]] <- as_tibble(df[p[[i]],])
