@@ -292,7 +292,7 @@ peffect_aux <- function(Y,
                         circ,
                         pe_rel = FALSE,
                         weights = NULL){
-  if (ML == "Lasso" | ML == "Ridge){
+  if (ML == "Lasso" | ML == "Ridge"){
 	Xk <- dplyr::select(as_tibble(X),-dplyr::starts_with(circ))
   }
   else{
