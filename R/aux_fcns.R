@@ -292,7 +292,13 @@ peffect_aux <- function(Y,
                         circ,
                         pe_rel = FALSE,
                         weights = NULL){
-  Xk <- dplyr::select(X,-all_of(circ))
+  if (ML == "Lasso" | ML == "Ridge){
+	Xk <- dplyr::select(as_tibble(X),-dplyr::starts_with(circ))
+  }
+  else{
+  	Xk <- dplyr::select(X,-all_of(circ))
+  }
+
   res <- IOD(Y,
              Xk,
              CFit = TRUE,
