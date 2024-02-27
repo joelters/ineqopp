@@ -3,6 +3,7 @@
 export("%>%")
 export(IOp)
 export(IOp2)
+export(IOp3)
 export(IOpgrouptest)
 export(IOptest)
 export(peffect)
