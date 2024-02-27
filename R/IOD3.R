@@ -1,14 +1,16 @@
-IOD <- function(Y,
-                X,
-                CFit = TRUE,
-                npart = 5,
-                ineq = c("Gini", "MLD",c("Gini", "MLD")),
-                ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
-                ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
-                sterr = TRUE,
-                weights = NULL,
-                IOp_rel = FALSE,
-                fitted_values = FALSE){
+IOD3 <- function(Y,
+                 X,
+                 CFit = TRUE,
+                 npart = 5,
+                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
+                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
+                 ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
+                 sterr = TRUE,
+                 weights = NULL,
+                 IOp_rel = FALSE,
+                 fitted_values = FALSE,
+                 parallel = FALSE,
+                 verbose = FALSE){
   #method takes the value of RF_type
   ML = match.arg(ML)
   # ineq = match.arg(ineq)
@@ -83,20 +85,30 @@ IOD <- function(Y,
     weights <- if (is.null(weights)) rep(1/nn,nn) else weights
     df <- dplyr::as_tibble(cbind(cbind(Y = Y, wt = weights),X))
     dfcf <- SP(df,npart)
-    indices <- dfcf$indices
     dfcf <- dfcf$dfsp
     if ("Gini" %in% ineq){
       numcf <- 0
       # SM <- vector(mode = "list", npart)
       count <- 0
+      cnt <- 0
       iod_mld <- 0
       RMSE1 <- rep(0,npart)
+      CFind <- NULL
       for (i in 1:npart){
-        # print(i)
-        i1 <- i
         count <- count + 1
-        #WE GO ACROSS THE DIAGONAL
-        for (j in i1:npart){
+        j1 <- i
+        for (j in j1:npart){
+          cnt <- cnt + 1
+          CFind[[cnt]] <- c(i,j,cnt,count)
+        }
+      }
+      if (parallel == FALSE){
+        rescf <- lapply(CFind,function(u){
+          i <- u[1]
+          j <- u[2]
+          cnt <- u[3]
+          count <- u[4]
+
           #Create dataframe with all observations not in I_l
           aux <- dfnotl(dfcf,i,j)
 
@@ -117,66 +129,168 @@ IOD <- function(Y,
           #Y2 are income observations in Cj, FVs2 are
           #predictions on Cj with model trained with obs
           #not in Ci or Cj
+
+          #i <= j (we want to sum across all i,j, but we are
+          #doing i <= j in the loop, we are going to do
+          #i > j manually whenever in the loop i!=j by just
+          #switching the roles of i and j, this way we dont
+          #train the model twice (once for (i,j) and another for (j,i)))
           X1 <- dplyr::select(dfcf[[i]], -c(Y,wt))
           Y1 <- dfcf[[i]]$Y
-          FVs1 <- round(ML::FVest(model,X,Y,X1,Y1,ML),7) #we round to avoid floating issues with sign function
-          FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
           if(!is.null(weights)){
             wt1 <- dfcf[[i]]$wt
           }
           else{wt1 <- NULL}
           #weights for MLD (1/n or weights)
           wtmld <- dfcf[[i]]$wt
-
           #If we are in a square
-          if (i != j){
-            Y2 <- dfcf[[j]]$Y
-            if(!is.null(weights)){
-              wt2 <- dfcf[[j]]$wt
-            }
-            X2 <- dplyr::select(dfcf[[j]], -c(Y,wt))
-            FVs2 <- round(ML::FVest(model,X,Y,X2,Y2,ML),7)
-            FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
-            if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
-              warning(paste(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0),
-              "FVs were lower or equal than 0 and were
-                    turned into the value 1."))
-            }
-            #Sum in the numerator of estimator (in square)
-            num <- iodnumsq(Y1,FVs1,Y2,FVs2, wt1 = wt1, wt2 = wt2)
+          Y2 <- dfcf[[j]]$Y
+          if(!is.null(weights)){
+            wt2 <- dfcf[[j]]$wt
           }
-          #If we are in a triangle
-          else{
-            #Sum in the numerator of estimator (triangle)
-            num <- iodnumtr(Y1,FVs1,wt = wt1)
-            if ("MLD" %in% ineq){
-              num_mld <- sum(wtmld*(log(FVs1) + (1/FVs1)*(Y1-FVs1)))
-              iod_mld <- iod_mld + num_mld
-            }
-            #Compute RMSE of first stage
+          X2 <- dplyr::select(dfcf[[j]], -c(Y,wt))
+          FVs1 <- round(ML::FVest(model,X,Y,X1,Y1,ML),7) #we round to avoid floating issues with sign function
+          FVs2 <- round(ML::FVest(model,X,Y,X2,Y2,ML),7)
+          FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
+          FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
+          if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
+            warning(paste(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0),
+                          "FVs were lower or equal than 0 and were
+                  turned into the value 1."))
+          }
+          #Rank of i across j
+          rk <- sapply(FVs1, function(u) sum(FVs2 <= u)/length(FVs2))
+          concind <- weighted.mean(rk*Y1, wt1) - 0.5*weighted.mean(Y1,wt1)
+
+          # i > j
+          #Rank of i across j
+          if (i !=j){
+            rk <- sapply(FVs2, function(u) sum(FVs1 <= u)/length(FVs1))
+            concind <- concind + weighted.mean(rk*Y2, wt2) - 0.5*weighted.mean(Y2,wt2)
+          }
+
+          #Compute RMSE of first stage
+          if (i == j){
             RMSE1[count] <- (length(Y1)/length(Y))*
               sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
+            if (verbose == TRUE){
+              print(paste(round(100*cnt/(npart*(npart + 1)/2),2),"% completed"))
+            }
           }
           #Add the term in the numerator of the estimator
           #corresponding to this block
-          numcf <- numcf + num
-        }
+          # numcf <- numcf + num
+          return(data.frame("concind" = concind, "RMSE1" = RMSE1[count]))
+        })
       }
+      else if (parallel == TRUE){
+        n.cores <- parallel::detectCores()
+        clust <- parallel::makeCluster(n.cores)
+        parallel::clusterEvalQ(clust, set.seed(123))
+        parallel::clusterExport(clust, c("dfcf","npart"),
+                                envir=environment())
+        rescf <- parallel::parLapply(clust, CFind, function(u){
+           # browser()
+           i <- u[1]
+           j <- u[2]
+           cnt <- u[3]
+           count <- u[4]
+
+           #Create dataframe with all observations not in I_l
+           aux <- dfnotl(dfcf,i,j)
+
+           #Train model with observations not in I_l (not in K = i or K = j)
+           m <- ML::MLest(dplyr::select(aux,-c(Y,wt)),
+                          aux$Y,
+                          ML,
+                          ensemble = ensemble,
+                          FVs = FALSE,
+                          weights = aux$wt)
+           model <- m$model
+
+           #Predict fitted values for obs in Ci and Cj
+           #using model trained with obs not in Ci or Cj
+           #Y1 are income observations in Ci, FVs1 are
+           #predictions on Ci with model trained with obs
+           #not in Ci or Cj
+           #Y2 are income observations in Cj, FVs2 are
+           #predictions on Cj with model trained with obs
+           #not in Ci or Cj
+
+           #i <= j (we want to sum across all i,j, but we are
+           #doing i <= j in the loop, we are going to do
+           #i > j manually whenever in the loop i!=j by just
+           #switching the roles of i and j, this way we dont
+           #train the model twice (once for (i,j) and another for (j,i)))
+           X1 <- dplyr::select(dfcf[[i]], -c(Y,wt))
+           Y1 <- dfcf[[i]]$Y
+           if(!is.null(weights)){
+             wt1 <- dfcf[[i]]$wt
+           }
+           else{wt1 <- NULL}
+           #weights for MLD (1/n or weights)
+           wtmld <- dfcf[[i]]$wt
+           #If we are in a square
+           Y2 <- dfcf[[j]]$Y
+           if(!is.null(weights)){
+             wt2 <- dfcf[[j]]$wt
+           }
+           X2 <- dplyr::select(dfcf[[j]], -c(Y,wt))
+           FVs1 <- round(ML::FVest(model,X,Y,X1,Y1,ML),7) #we round to avoid floating issues with sign function
+           FVs2 <- round(ML::FVest(model,X,Y,X2,Y2,ML),7)
+           FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
+           FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
+           if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
+             warning(paste(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0),
+                           "FVs were lower or equal than 0 and were
+                            turned into the value 1."))
+           }
+           #Rank of i across j
+           rk <- sapply(FVs1, function(u) sum(FVs2 <= u)/length(FVs2))
+           concind <- weighted.mean(rk*Y1, wt1) - 0.5*weighted.mean(Y1,wt1)
+
+           # i > j
+           #Rank of i across j
+           if (i !=j){
+             rk <- sapply(FVs2, function(u) sum(FVs1 <= u)/length(FVs1))
+             concind <- concind + weighted.mean(rk*Y2, wt2) - 0.5*weighted.mean(Y2,wt2)
+           }
+
+           #Compute RMSE of first stage
+           if (i == j){
+             RMSE1[count] <- (length(Y1)/length(Y))*
+               sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
+             if (verbose == TRUE){
+               print(paste(round(100*count/(npart*(npart + 1)/2),2),"% completed"))
+             }
+           }
+           #Add the term in the numerator of the estimator
+           #corresponding to this block
+           # numcf <- numcf + num
+           return(data.frame("concind" = concind, "RMSE1" = RMSE1[count]))
+         })
+        parallel::stopCluster(clust)
+      }
+      rescf <- do.call(rbind,rescf)
+      concind <- sum(rescf$concind)
+
       #Compute denominator
       n <- length(Y)
       if (is.null(weights) == 1){
-        dencf <- (n-1)*n*mean(Y)
+        dencf <- 2*mean(Y)*npart^2
       }
       else{
-        WW <- sumUw(weights)
-        dencf <- WW*2*stats::weighted.mean(Y,weights)
+        dencf <- 2*weighted.mean(Y,weights)*npart^2
       }
       #Estimate and RMSE1
-      iod_gini <- numcf/dencf
+      iod_gini <- 4*concind/dencf
       if ("MLD" %in% ineq){
+        stop("No MLD, you broke it when coding in concentration index")
         iod_mld <- log(stats::weighted.mean(Y,weights)) - iod_mld
       }
-      RMSE1 <- sum(RMSE1)
+      # RMSE1 <- sum(RMSE1)
+      RMSE1 <- 0
+      warning("No RMSE, you broke it when coding concentration index")
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
         m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
@@ -191,6 +305,9 @@ IOD <- function(Y,
       }
       #SE
       if (sterr == TRUE){
+        if (verbose == TRUE){
+          print("Computing standard error")
+        }
         se_gini <- se_deb(Y, FVres, iod_gini, ineq = "Gini", weights = weights)
         if ("MLD" %in% ineq){
           se_mld <- se_deb(Y, FVres, iod_mld, ineq = "MLD", weights = weights)
@@ -207,6 +324,9 @@ IOD <- function(Y,
         G <- as.numeric(G[2])
         IOpr_gini <- iod_gini/G
         if (sterr == TRUE){
+          if (verbose == TRUE){
+            print("Computing se of relative estimate")
+          }
           se_rel_gini <- se_rel(Y,FVres,iod_gini, ineq = ineq, IY = G, weights = weights)
         } else{se_rel_gini <- NULL}
         if ("MLD" %in% ineq){

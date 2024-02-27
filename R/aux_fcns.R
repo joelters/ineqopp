@@ -55,38 +55,59 @@ sepi <- function(Y,FVs,iop, ineq = c("Gini", "MLD"), weights = NULL){
   }
 }
 
+# io_deb <- function(Y, FVs, ineq = c("Gini", "MLD"), weights = NULL){
+#   ineq = match.arg(ineq)
+#   if (ineq == "Gini"){
+#     if (is.null(weights)){
+#       n <- length(Y)
+#       i1 <- n-1
+#       b1 <- 0
+#       for (i in 1:i1){
+#         j1 <- i+1
+#         for (j in j1:n){
+#           b1 <- b1 + ((FVs[i] > FVs[j]) - (FVs[j] > FVs[i]))*
+#             (Y[i] - Y[j])
+#         }
+#       }
+#       return(b1/((n-1)*n*mean(Y)))
+#     }
+#     else{
+#       n <- length(Y)
+#       b1 <- 0
+#       WW <- 0
+#       n1 <- n-1
+#       for (i in 1:n1){
+#         j1 <- i+1
+#         for (j in j1:n){
+#           b1 <- b1 + weights[i]*weights[j]*((FVs[i] > FVs[j]) - (FVs[j] > FVs[i]))*
+#             (Y[i] - Y[j])
+#           WW <- WW + weights[i]*weights[j]
+#         }
+#       }
+#       den <- WW*2*weighted.mean(Y,wt)
+#       return(b1/den)
+#     }
+#   }
+#   else if (ineq == "MLD"){
+#     wt <- if (is.null(weights)) rep(1/length(Y),length(Y)) else weights
+#     th1 <- weighted.mean(Y,wt)
+#     th2 <- weighted.mean(log(FVs) + (1/FVs)*(Y-FVs), wt)
+#     return(log(th1) - th2)
+#   }
+# }
+
+
 io_deb <- function(Y, FVs, ineq = c("Gini", "MLD"), weights = NULL){
   ineq = match.arg(ineq)
   if (ineq == "Gini"){
-    if (is.null(weights)){
-      n <- length(Y)
-      i1 <- n-1
-      b1 <- 0
-      for (i in 1:i1){
-        j1 <- i+1
-        for (j in j1:n){
-          b1 <- b1 + ((FVs[i] > FVs[j]) - (FVs[j] > FVs[i]))*
-            (Y[i] - Y[j])
-        }
-      }
-      return(b1/((n-1)*n*mean(Y)))
-    }
-    else{
-      n <- length(Y)
-      b1 <- 0
-      WW <- 0
-      n1 <- n-1
-      for (i in 1:n1){
-        j1 <- i+1
-        for (j in j1:n){
-          b1 <- b1 + weights[i]*weights[j]*((FVs[i] > FVs[j]) - (FVs[j] > FVs[i]))*
-            (Y[i] - Y[j])
-          WW <- WW + weights[i]*weights[j]
-        }
-      }
-      den <- WW*2*weighted.mean(Y,wt)
-      return(b1/den)
-    }
+    if (is.null(weights)){weights = rep(1,length(Y))}
+    wt <- weights/sum(weights)
+    n <- length(Y)
+    aa <- dplyr::arrange(data.frame("Y" = Y, "FVs" = FVs, "wt"= wt),FVs)
+    aa$R <- cumsum(aa$wt)/sum(aa$wt)
+    covyfv <- weighted.mean(aa$Y*aa$R, aa$wt) -
+      weighted.mean(aa$Y,aa$wt)*weighted.mean(aa$R,aa$wt)
+    return(2*covyfv/weighted.mean(Y,wt))
   }
   else if (ineq == "MLD"){
     wt <- if (is.null(weights)) rep(1/length(Y),length(Y)) else weights
@@ -486,7 +507,7 @@ SP <- function(df, npart){
   for (i in 1:npart){
     dfsp[[i]] <- as_tibble(df[p[[i]],])
   }
-  return(dfsp)
+  return(list(dfsp = dfsp, indices = p))
 }
 
 dfnotl <- function(dfcf,i,j){
