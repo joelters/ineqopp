@@ -141,8 +141,7 @@ IOD3 <- function(Y,
             wt1 <- dfcf[[i]]$wt
           }
           else{wt1 <- NULL}
-          #weights for MLD (1/n or weights)
-          wtmld <- dfcf[[i]]$wt
+
           #If we are in a square
           Y2 <- dfcf[[j]]$Y
           if(!is.null(weights)){
@@ -168,11 +167,20 @@ IOD3 <- function(Y,
             rk <- sapply(FVs2, function(u) sum(FVs1 <= u)/length(FVs1))
             concind <- concind + weighted.mean(rk*Y2, wt2) - 0.5*weighted.mean(Y2,wt2)
           }
-
+          # save zeros for FVs and RMSE since we only want to save them on diagonal
+          fvss <- rep(0,length(Y1))
+          RMSE1 <- 0
+          num_mld <- 0
           #Compute RMSE of first stage
           if (i == j){
-            RMSE1[count] <- (length(Y1)/length(Y))*
+            RMSE1 <- (length(Y1)/length(Y))*
               sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
+            fvss <- FVs1
+            if ("MLD" %in% ineq){
+              #weights for MLD (1/n or weights)
+              wtmld <- dfcf[[i]]$wt
+              num_mld <- sum(wtmld*(log(FVs1) + (1/FVs1)*(Y1-FVs1)))
+            }
             if (verbose == TRUE){
               print(paste(round(100*cnt/(npart*(npart + 1)/2),2),"% completed"))
             }
@@ -180,7 +188,16 @@ IOD3 <- function(Y,
           #Add the term in the numerator of the estimator
           #corresponding to this block
           # numcf <- numcf + num
-          return(data.frame("concind" = concind, "RMSE1" = RMSE1[count]))
+          if ("MLD" %in% ineq){
+            return(list("concrmse" = data.frame("concind" = concind,
+                                                "num_mld" = num_mld,
+                                                "RMSE1" = RMSE1),
+                        FVs = fvss))
+          } else{
+            return(list("concrmse" = data.frame("concind" = concind,
+                                                "RMSE1" = RMSE1),
+                        FVs = fvss))
+          }
         })
       }
       else if (parallel == TRUE){
@@ -190,7 +207,6 @@ IOD3 <- function(Y,
         parallel::clusterExport(clust, c("dfcf","npart"),
                                 envir=environment())
         rescf <- parallel::parLapply(clust, CFind, function(u){
-           # browser()
            i <- u[1]
            j <- u[2]
            cnt <- u[3]
@@ -228,8 +244,7 @@ IOD3 <- function(Y,
              wt1 <- dfcf[[i]]$wt
            }
            else{wt1 <- NULL}
-           #weights for MLD (1/n or weights)
-           wtmld <- dfcf[[i]]$wt
+
            #If we are in a square
            Y2 <- dfcf[[j]]$Y
            if(!is.null(weights)){
@@ -255,11 +270,20 @@ IOD3 <- function(Y,
              rk <- sapply(FVs2, function(u) sum(FVs1 <= u)/length(FVs1))
              concind <- concind + weighted.mean(rk*Y2, wt2) - 0.5*weighted.mean(Y2,wt2)
            }
-
+           # save zeros for FVs and RMSE since we only want to save them on diagonal
+           fvss <- rep(0,length(Y1))
+           RMSE1 <- 0
+           num_mld <- 0
            #Compute RMSE of first stage
            if (i == j){
-             RMSE1[count] <- (length(Y1)/length(Y))*
+             RMSE1 <- (length(Y1)/length(Y))*
                sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
+             fvss <- FVs1
+             if ("MLD" %in% ineq){
+               #weights for MLD (1/n or weights)
+               wtmld <- dfcf[[i]]$wt
+               num_mld <- sum(wtmld*(log(FVs1) + (1/FVs1)*(Y1-FVs1)))
+             }
              if (verbose == TRUE){
                print(paste(round(100*count/(npart*(npart + 1)/2),2),"% completed"))
              }
@@ -267,12 +291,30 @@ IOD3 <- function(Y,
            #Add the term in the numerator of the estimator
            #corresponding to this block
            # numcf <- numcf + num
-           return(data.frame("concind" = concind, "RMSE1" = RMSE1[count]))
+           if ("MLD" %in% ineq){
+             return(list("concrmse" = data.frame("concind" = concind,
+                                                 "num_mld" = num_mld,
+                                                 "RMSE1" = RMSE1),
+                         FVs = fvss))
+           } else{
+              return(list("concrmse" = data.frame("concind" = concind,
+                                               "RMSE1" = RMSE1),
+                          FVs = fvss))
+           }
          })
         parallel::stopCluster(clust)
       }
-      rescf <- do.call(rbind,rescf)
-      concind <- sum(rescf$concind)
+      rescf2 <- lapply(1:length(rescf), function(u) rescf[[u]][[1]])
+      rescf3 <- do.call(rbind,rescf2)
+      iii <- which(rescf3$RMSE1 != 0)
+      rescf4 <- lapply(1:length(rescf), function(u) rescf[[u]][[2]])
+      FVs <- unlist(rescf4[iii])
+
+      concind <- sum(rescf3$concind)
+      RMSE1 <- sum(rescf3$RMSE1)
+      if ("MLD" %in% ineq){
+        iod_mld <- sum(rescf3$num_mld)
+      }
 
       #Compute denominator
       n <- length(Y)
@@ -285,21 +327,12 @@ IOD3 <- function(Y,
       #Estimate and RMSE1
       iod_gini <- 4*concind/dencf
       if ("MLD" %in% ineq){
-        stop("No MLD, you broke it when coding in concentration index")
         iod_mld <- log(stats::weighted.mean(Y,weights)) - iod_mld
       }
-      # RMSE1 <- sum(RMSE1)
-      RMSE1 <- 0
-      warning("No RMSE, you broke it when coding concentration index")
+
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
-        FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
-        FVres <- FVres*(FVres > 0) + (FVres <= 0)
-        if(sum(m$FVres <= 0) != 0){
-          warning(paste(sum(m$FVres <= 0),"FVs were lower or equal than 0 and were
-                      turned into the value 1."))
-        }
+        FVres <- FVs
       } else if (fitted_values == FALSE & sterr == FALSE){
         FVres <- NULL
       }
@@ -383,6 +416,7 @@ IOD3 <- function(Y,
       iodeb <- 0
       RMSE1 <- rep(0,npart)
       count <- 0
+      fvss <- NULL
       for (i in 1:npart){
         #Create dataframe with all observations not in C_i
         aux <- dfnotl(dfcf,i,i)
@@ -405,6 +439,7 @@ IOD3 <- function(Y,
         #Estimate fitted values
         FVs <- ML::FVest(model, X, Y, Xcf, Ycf, ML)
         FVs <- FVs*(FVs > 0) + (FVs <= 0)
+        fvss <- c(fvss, FVs)
         if(sum(m$FVs <= 0) != 0){
           warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were
                     turned into the value 1."))
@@ -421,13 +456,7 @@ IOD3 <- function(Y,
       RMSE1 <- sum(RMSE1)
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
-        FVres <- m$FVs
-        FVres <- FVres*(FVres > 0) + (FVres <= 0)
-        if(sum(m$FVres <= 0) != 0){
-          warning(paste(sum(m$FVres <= 0),"FVs were lower or equal than 0 and were
-                      turned into the value 1."))
-        }
+        FVres <- fvss
       } else if (fitted_values == FALSE & sterr == FALSE){
         FVres <- NULL
       }
