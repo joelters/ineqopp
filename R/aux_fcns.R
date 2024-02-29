@@ -679,6 +679,7 @@ mliop <- function(X,
       else {return(iopi)}
     }
     else if (u == "MLD"){
+      browser()
       iopi <- mld(FVs, weights)
       if (IOp_rel == TRUE){
         MLD <- mld(Y,weights)

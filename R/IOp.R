@@ -1,8 +1,8 @@
 #' Estimate Inequality of Opportunity (IOp)
 #'
 #' `IOp` estimates IOp in different ways. Plug in estimators are available
-#' where the fitted values are estimated by a log-linear regression,
-#' non-parametrically and by any machine learner among Lasso, Ridge,
+#' where the fitted values are estimated
+#' by any machine learner among Lasso, Ridge,
 #' Random Forest, Conditional Inference Forest, Extreme Gradient
 #' Boosting, Catboosting or a (cross-validated) optimal combination of any
 #' of these using the SuperLearner package. Debiased estimates based on the aforementioned
@@ -17,8 +17,6 @@
 #' @param ensemble is a string vector specifying which learners
 #' should be used in the SuperLearner
 #' @param sterr logical indicating whether standard errors should be computed
-#' @param boots how many bootstrap samples to take to compute plug in standard
-#' errors
 #' @param CFit logical indicating whether Cross-Fitting should be done in
 #' the debiased estimators (no inferential guarantee can be given yet if FALSE)
 #' @param npart in how many parts should the data be split for cross-fitting
@@ -32,38 +30,17 @@
 #' X <- dplyr::select(mad2019,-Y)
 #' Y <- mad2019$Y
 #'
-#' iop_pi1 <- IOp(Y,
-#'                X,
-#'                est_method = "Plugin",
-#'                ineq = c("Gini","MLD"),
-#'                plugin_method = "loglin",
-#'                ML = "Lasso",
-#'                sterr = TRUE,
-#'                boots = 500,
-#'                IOp_rel = TRUE,
-#'                fitted_values = TRUE)
 #'
-#' iop_pi2 <- IOp(Y,
-#'                X,
-#'                est_method = "Plugin",
-#'                ineq = "MLD",
-#'                plugin_method = "NP",
-#'                ML = "Lasso",
-#'                sterr = TRUE,
-#'                boots = 500,
-#'                IOp_rel = TRUE,
-#'                fitted_values = TRUE)
 #'
-#' iop_pi3 <- IOp(Y,
-#'                X,
-#'                est_method = "Plugin",
-#'                ineq = "Gini",
-#'                plugin_method = "ML",
-#'                ML = "SL",
-#'                ensemble = c("SL.Lasso","SL.CB"),
-#'                sterr = FALSE,
-#'                IOp_rel = TRUE,
-#'                fitted_values = TRUE)
+#' iop_pi <- IOp(Y,
+#'               X,
+#'               est_method = "Plugin",
+#'               ineq = "Gini",
+#'               ML = "SL",
+#'               ensemble = c("SL.Lasso","SL.CB"),
+#'               sterr = FALSE,
+#'               IOp_rel = TRUE,
+#'               fitted_values = TRUE)
 #'
 #' iop_deb <- IOp(Y,
 #'                X,
@@ -87,11 +64,9 @@ IOp <- function(Y,
                 X,
                 est_method = c("Plugin","Debiased"),
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
-                plugin_method = c("loglin", "NP", "ML"),
                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
                 ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
                 sterr = TRUE,
-                boots = 100,
                 CFit = TRUE,
                 npart = 5,
                 IOp_rel = FALSE,
@@ -102,13 +77,11 @@ IOp <- function(Y,
       io <- IOPI(Y,
             X,
             ineq = ineq,
-            plugin_method = plugin_method,
             ML = ML,
             ensemble = ensemble,
             IOp_rel = IOp_rel,
             sterr = sterr,
             fitted_values = fitted_values,
-            boots = boots,
             weights = weights)
     }
     else if (est_method == "Debiased"){

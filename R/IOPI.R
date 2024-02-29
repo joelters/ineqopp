@@ -1,96 +1,36 @@
 IOPI <- function(Y,
                  X,
                  ineq = c("Gini", "MLD",c("Gini","MLD")),
-                 plugin_method = c("loglin", "NP", "ML"),
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                  ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
                  IOp_rel = FALSE,
                  sterr = FALSE,
                  fitted_values = FALSE,
-                 boots = 100,
                  weights = NULL){
-  #Log linear
-  if (plugin_method == "loglin"){
-    iopi <- logliniop(X,
-                      Y,
-                      ineq = ineq,
-                      IOp_rel = IOp_rel,
-                      fitted_values = fitted_values,
-                      weights = weights)
-    if (sterr == TRUE){
-      seres <- sapply(1:boots, function(u){
-        ind <- sample(length(Y), replace = TRUE)
-        Yboot <- Y[ind]
-        Xboot <- X[ind,]
-        logliniop(Xboot,
-                  Y,
-                  ineq = ineq,
-                  IOp_rel = IOp_rel,
-                  fitted_values = FALSE,
-                  weights = weights)
-      })
-    }
-  }
-  #NP
-  else if (plugin_method == "NP"){
-    iopi <- npiop(X,
-                  Y,
-                  ineq = ineq,
-                  IOp_rel = IOp_rel,
-                  fitted_values = fitted_values,
-                  weights = weights)
-    if (sterr == TRUE){
-      seres <- sapply(1:boots, function(u){
-        ind <- sample(length(Y), replace = TRUE)
-        Yboot <- Y[ind]
-        Xboot <- X[ind,]
-        npiop(Xboot,
-              Yboot,
-              ineq = ineq,
-              IOp_rel = IOp_rel,
-              fitted_values = FALSE,
-              weights = weights)
-      })
-    }
-  }
+
   #ML
-  else if (plugin_method == "ML"){
-    #method takes the value of ML
-    iopi <- mliop(X,
-                  Y,
-                  ML = ML,
-                  ensemble = ensemble,
-                  ineq = ineq,
-                  IOp_rel = IOp_rel,
-                  fitted_values = fitted_values,
-                  weights = weights)
-      #Standard errors
-      if(sterr == TRUE){
-        seres <- sapply(1:boots, function(u){
-          ind <- sample(length(Y), replace = TRUE)
-          Yboot <- Y[ind]
-          Xboot <- X[ind,]
-          mliop(Xboot,
-                Yboot,
+
+  #method takes the value of ML
+  iopi <- mliop(X,
+                Y,
                 ML = ML,
                 ensemble = ensemble,
                 ineq = ineq,
                 IOp_rel = IOp_rel,
-                fitted_values = FALSE,
+                fitted_values = fitted_values,
                 weights = weights)
-        })
-      }
+    #Standard errors
+  if(sterr == TRUE){
+      warning("For se with plug in set FVs = TRUE")
+      FVs <- iopi$FVs
+      se <- sepi(Y,FVs,iopi$IOp, ineq = ineq, weights = weights)
   }
+
   if (fitted_values == TRUE){
     FVs <- iopi$FVs
     iopi <- iopi$IOp
   }
   if (sterr == TRUE){
-    if (!is.null(nrow(seres)) == 1){
-      se <- sapply(1:nrow(seres), function(u){sd(seres[u,])})
-    } else{
-      se <- sd(seres)
-    }
     if (IOp_rel == TRUE){
       aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
       names(se) <- c(rbind(ineq,aux))
