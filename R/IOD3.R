@@ -332,7 +332,10 @@ IOD3 <- function(Y,
 
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        FVres <- FVs
+        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
+        FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
+        FVres <- FVres*(FVres > 0) + (FVres <= 0)
+        # FVres <- FVs
       } else if (fitted_values == FALSE & sterr == FALSE){
         FVres <- NULL
       }
