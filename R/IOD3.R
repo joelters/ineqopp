@@ -386,7 +386,7 @@ IOD3 <- function(Y,
                                   "se" = c(se_gini, se_mld)),
                       RMSE1 = RMSE1,
                       IOp_rel = rbind("IOp_rel" = c("Gini" = IOpr_gini, "MLD" = IOpr_mld),
-                                      "se" = c(se_rel_gini, se_rel_mld)), FVs = FVres))
+                                      "se" = c(se_rel_gini, se_rel_mld)), FVs = fvss))
         }else{
           return(list(IOp = rbind("IOp" = c("Gini" = iod_gini, "MLD" = iod_mld),
                                   "se" = c(se_gini, se_mld)),
@@ -441,7 +441,7 @@ IOD3 <- function(Y,
 
         #Estimate fitted values
         FVs <- ML::FVest(model, X, Y, Xcf, Ycf, ML)
-        FVs <- FVs*(FVs > 0) + (FVs <= 0)
+        FVs <- (FVs*(FVs > 0) + (FVs <= 0))
         fvss <- c(fvss, FVs)
         if(sum(m$FVs <= 0) != 0){
           warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were
@@ -459,7 +459,10 @@ IOD3 <- function(Y,
       RMSE1 <- sum(RMSE1)
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        FVres <- fvss
+        # FVres <- fvss
+        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
+        FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
+        FVres <- FVres*(FVres > 0) + (FVres <= 0)
       } else if (fitted_values == FALSE & sterr == FALSE){
         FVres <- NULL
       }
