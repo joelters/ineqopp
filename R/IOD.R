@@ -9,6 +9,9 @@ IOD <- function(Y,
                 weights = NULL,
                 IOp_rel = FALSE,
                 fitted_values = FALSE){
+  if(!is.null(weights) & class(weights) != "numeric"){
+    stop("Weights have to be numeric")
+  }
   #method takes the value of RF_type
   ML = match.arg(ML)
   # ineq = match.arg(ineq)

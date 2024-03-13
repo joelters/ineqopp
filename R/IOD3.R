@@ -10,7 +10,12 @@ IOD3 <- function(Y,
                  IOp_rel = FALSE,
                  fitted_values = FALSE,
                  parallel = FALSE,
+                 rf.cf.ntree = 500,
+                 rf.depth = NULL,
                  verbose = FALSE){
+  if(!is.null(weights) & class(weights) != "numeric"){
+    stop("Weights have to be numeric")
+  }
   #method takes the value of RF_type
   ML = match.arg(ML)
   # ineq = match.arg(ineq)
@@ -117,6 +122,8 @@ IOD3 <- function(Y,
                          aux$Y,
                          ML,
                          ensemble = ensemble,
+                         rf.cf.ntree = rf.cf.ntree,
+                         rf.depth = rf.depth,
                          FVs = FALSE,
                          weights = aux$wt)
           model <- m$model
@@ -204,7 +211,8 @@ IOD3 <- function(Y,
         n.cores <- parallel::detectCores()
         clust <- parallel::makeCluster(n.cores)
         parallel::clusterEvalQ(clust, set.seed(123))
-        parallel::clusterExport(clust, c("dfcf","npart"),
+        parallel::clusterExport(clust, c("dfcf","npart","rf.cf.ntree",
+                                         "rf.depth"),
                                 envir=environment())
         rescf <- parallel::parLapply(clust, CFind, function(u){
            i <- u[1]
@@ -221,6 +229,8 @@ IOD3 <- function(Y,
                           ML,
                           ensemble = ensemble,
                           FVs = FALSE,
+                          rf.cf.ntree = rf.cf.ntree,
+                          rf.depth = rf.depth,
                           weights = aux$wt)
            model <- m$model
 
@@ -332,7 +342,10 @@ IOD3 <- function(Y,
 
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
+        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE,
+                       rf.cf.ntree = rf.cf.ntree,
+                       rf.depth = rf.depth,
+                       weights = weights)
         FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
         FVres <- FVres*(FVres > 0) + (FVres <= 0)
         # FVres <- FVs
@@ -430,6 +443,8 @@ IOD3 <- function(Y,
                        ML,
                        ensemble = ensemble,
                        FVs = FALSE,
+                       rf.cf.ntree = rf.cf.ntree,
+                       rf.depth = rf.depth,
                        weights = aux$wt)
         model <- m$model
 
@@ -460,7 +475,10 @@ IOD3 <- function(Y,
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
         # FVres <- fvss
-        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
+        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE,
+                       rf.cf.ntree = rf.cf.ntree,
+                       rf.depth = rf.depth,
+                       weights = weights)
         FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
         FVres <- FVres*(FVres > 0) + (FVres <= 0)
       } else if (fitted_values == FALSE & sterr == FALSE){

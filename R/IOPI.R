@@ -5,12 +5,13 @@ IOPI <- function(Y,
                  ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
                  IOp_rel = FALSE,
                  sterr = FALSE,
-                 fitted_values = FALSE,
-                 weights = NULL){
-
-  #ML
-
-  #method takes the value of ML
+                 fitted_values = TRUE,
+                 weights = NULL,
+                 rf.cf.ntree = 500,
+                 rf.depth = NULL){
+  if(!is.null(weights) & class(weights) != "numeric"){
+    stop("Weights have to be numeric")
+  }
   iopi <- mliop(X,
                 Y,
                 ML = ML,
@@ -18,7 +19,9 @@ IOPI <- function(Y,
                 ineq = ineq,
                 IOp_rel = IOp_rel,
                 fitted_values = fitted_values,
-                weights = weights)
+                weights = weights,
+                rf.cf.ntree = rf.cf.ntree,
+                rf.depth = rf.depth)
     #Standard errors
   if(sterr == TRUE){
       warning("For se with plug in set FVs = TRUE")

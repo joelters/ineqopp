@@ -117,6 +117,15 @@ io_deb <- function(Y, FVs, ineq = c("Gini", "MLD"), weights = NULL){
   }
 }
 
+se_deb2 <- function(Y, FVs, iop){
+  n <- length(Y)
+  d <- sapply(1:n, function(u){
+    Y_FVs_i <- cbind(Y,FVs)[u,]
+    d <- mean(sign(Y_FVs_i[2] - FVs)*(Y_FVs_i[1] - Y))
+  })
+    V <- 4*var(iop*Y - d)/((2*mean(Y))^2)
+    return(sqrt(V)/sqrt(length(Y)))
+}
 
 se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
   ineq <- match.arg(ineq)
@@ -649,6 +658,8 @@ mliop <- function(X,
                   ineq = c("Gini", "MLD",c("Gini","MLD")),
                   IOp_rel = FALSE,
                   fitted_values = FALSE,
+                  rf.cf.ntree = 500,
+                  rf.depth = NULL,
                   weights = NULL){
   ML = match.arg(ML)
   # ineq = match.arg(ineq)
@@ -657,6 +668,8 @@ mliop <- function(X,
                  Y,
                  ML,
                  ensemble = ensemble,
+                 rf.cf.ntree = rf.cf.ntree,
+                 rf.depth = rf.depth,
                  FVs = TRUE,
                  weights = weights)
   FVs <- m$FVs

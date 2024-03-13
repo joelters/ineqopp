@@ -64,7 +64,6 @@ IOp3 <- function(Y,
                  X,
                  est_method = c("Plugin","Debiased"),
                  ineq = c("Gini", "MLD",c("Gini", "MLD")),
-                 plugin_method = c("loglin", "NP", "ML"),
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
                  ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
                  sterr = TRUE,
@@ -72,9 +71,11 @@ IOp3 <- function(Y,
                  CFit = TRUE,
                  npart = 5,
                  IOp_rel = FALSE,
-                 fitted_values = FALSE,
+                 fitted_values = TRUE,
                  weights = NULL,
                  parallel = FALSE,
+                 rf.cf.ntree = 500,
+                 rf.depth = NULL,
                  verbose = FALSE){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
@@ -86,7 +87,9 @@ IOp3 <- function(Y,
                IOp_rel = IOp_rel,
                sterr = sterr,
                fitted_values = fitted_values,
-               weights = weights)
+               weights = weights,
+               rf.cf.ntree = rf.cf.ntree,
+               rf.depth = rf.depth)
   }
   else if (est_method == "Debiased"){
     io <- IOD3(Y,
@@ -101,6 +104,8 @@ IOp3 <- function(Y,
                fitted_values = fitted_values,
                weights = weights,
                parallel = parallel,
+               rf.cf.ntree = rf.cf.ntree,
+               rf.depth = rf.depth,
                verbose = verbose)
   }
 }
