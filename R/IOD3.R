@@ -39,7 +39,7 @@ IOD3 <- function(Y,
       iodeb <- io_deb(Y, FVs, ineq = u, weights = weights)
       #SEs
       if (sterr == TRUE){
-        se <- se_deb(Y, FVs, iodeb, ineq = u, weights = weights)
+        se <- se_deb3(Y, FVs, iodeb, ineq = u, weights = weights)
       } else{se <- NULL}
       if (u == "Gini" & IOp_rel == TRUE){
         G <- acid::weighted.gini(Y,weights)
@@ -357,9 +357,9 @@ IOD3 <- function(Y,
         if (verbose == TRUE){
           print("Computing standard error")
         }
-        se_gini <- se_deb(Y, FVres, iod_gini, ineq = "Gini", weights = weights)
+        se_gini <- se_deb3(Y, FVres, iod_gini, ineq = "Gini", weights = weights)
         if ("MLD" %in% ineq){
-          se_mld <- se_deb(Y, FVres, iod_mld, ineq = "MLD", weights = weights)
+          se_mld <- se_deb3(Y, FVres, iod_mld, ineq = "MLD", weights = weights)
         }
       } else{
         se_gini <- NULL
@@ -486,7 +486,7 @@ IOD3 <- function(Y,
       }
       #SE
       if (sterr == TRUE){
-        se <- se_deb(Y, FVres, iodeb, ineq = ineq, weights = weights)
+        se <- se_deb3(Y, FVres, iodeb, ineq = ineq, weights = weights)
       }
       else{se <- NULL}
       #IOp relative
