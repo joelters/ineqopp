@@ -9,7 +9,6 @@ IOp3(
   X,
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  plugin_method = c("loglin", "NP", "ML"),
   ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "SL"),
   ensemble = c("SL.Lasso", "SL.Ridge", "SL.RF", "SL.CIF", "SL.XGB", "SL.CB"),
   sterr = TRUE,
@@ -17,9 +16,11 @@ IOp3(
   CFit = TRUE,
   npart = 5,
   IOp_rel = FALSE,
-  fitted_values = FALSE,
+  fitted_values = TRUE,
   weights = NULL,
   parallel = FALSE,
+  rf.cf.ntree = 500,
+  rf.depth = NULL,
   verbose = FALSE
 )
 }
@@ -35,9 +36,6 @@ should be used in the SuperLearner}
 
 \item{sterr}{logical indicating whether standard errors should be computed}
 
-\item{boots}{how many bootstrap samples to take to compute plug in standard
-errors}
-
 \item{CFit}{logical indicating whether Cross-Fitting should be done in
 the debiased estimators (no inferential guarantee can be given yet if FALSE)}
 
@@ -49,6 +47,13 @@ the debiased estimators (no inferential guarantee can be given yet if FALSE)}
 should be computed. This can be useful for computing partial effects later.}
 
 \item{weights}{survey weights adding up to 1}
+
+\item{rf.cf.ntree}{number of trees to grow if using Random Forests or Conditional
+Inference Forests}
+
+\item{rf.depth}{how deep should the Random Forest trees be. See ranger documentation.}
+
+\item{verbose}{whether some progress should be reported while the function runs.}
 }
 \value{
 list containing IOp estimates, RMSE of the first stage (for Debiased
@@ -56,8 +61,8 @@ estimates), relative IOp (if desired) and fitted values (if desired)
 }
 \description{
 \code{IOp} estimates IOp in different ways. Plug in estimators are available
-where the fitted values are estimated by a log-linear regression,
-non-parametrically and by any machine learner among Lasso, Ridge,
+where the fitted values are estimated
+by any machine learner among Lasso, Ridge,
 Random Forest, Conditional Inference Forest, Extreme Gradient
 Boosting, Catboosting or a (cross-validated) optimal combination of any
 of these using the SuperLearner package. Debiased estimates based on the aforementioned
@@ -70,38 +75,17 @@ measures can also be computed.
 X <- dplyr::select(mad2019,-Y)
 Y <- mad2019$Y
 
-iop_pi1 <- IOp(Y,
-               X,
-               est_method = "Plugin",
-               ineq = c("Gini","MLD"),
-               plugin_method = "loglin",
-               ML = "Lasso",
-               sterr = TRUE,
-               boots = 500,
-               IOp_rel = TRUE,
-               fitted_values = TRUE)
 
-iop_pi2 <- IOp(Y,
-               X,
-               est_method = "Plugin",
-               ineq = "MLD",
-               plugin_method = "NP",
-               ML = "Lasso",
-               sterr = TRUE,
-               boots = 500,
-               IOp_rel = TRUE,
-               fitted_values = TRUE)
 
-iop_pi3 <- IOp(Y,
-               X,
-               est_method = "Plugin",
-               ineq = "Gini",
-               plugin_method = "ML",
-               ML = "SL",
-               ensemble = c("SL.Lasso","SL.CB"),
-               sterr = FALSE,
-               IOp_rel = TRUE,
-               fitted_values = TRUE)
+iop_pi <- IOp(Y,
+              X,
+              est_method = "Plugin",
+              ineq = "Gini",
+              ML = "SL",
+              ensemble = c("SL.Lasso","SL.CB"),
+              sterr = FALSE,
+              IOp_rel = TRUE,
+              fitted_values = TRUE)
 
 iop_deb <- IOp(Y,
                X,

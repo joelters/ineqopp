@@ -24,6 +24,10 @@
 #' @param fitted_values a logical indicating whether (in sample) fitted values
 #' should be computed. This can be useful for computing partial effects later.
 #' @param weights survey weights adding up to 1
+#' @param rf.cf.ntree number of trees to grow if using Random Forests or Conditional
+#' Inference Forests
+#' @param rf.depth how deep should the Random Forest trees be. See ranger documentation.
+#' @param verbose whether some progress should be reported while the function runs.
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' estimates), relative IOp (if desired) and fitted values (if desired)
 #' @examples
