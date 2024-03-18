@@ -117,14 +117,25 @@ io_deb <- function(Y, FVs, ineq = c("Gini", "MLD"), weights = NULL){
   }
 }
 
-se_deb2 <- function(Y, FVs, iop){
+se_deb2 <- function(Y, FVs, iop, weights = NULL){
   n <- length(Y)
-  d <- sapply(1:n, function(u){
-    Y_FVs_i <- cbind(Y,FVs)[u,]
-    d <- mean(sign(Y_FVs_i[2] - FVs)*(Y_FVs_i[1] - Y))
-  })
+  if (is.null(weights)){
+    d <- sapply(1:n, function(u){
+      Y_FVs_i <- cbind(Y,FVs)[u,]
+      d <- mean(sign(Y_FVs_i[2] - FVs)*(Y_FVs_i[1] - Y))
+    })
     V <- 4*var(iop*Y - d)/((2*mean(Y))^2)
     return(sqrt(V)/sqrt(length(Y)))
+  }
+  else{
+    d <- sapply(1:n, function(u){
+      Y_FVs_i <- cbind(Y,FVs)[u,]
+      d <- weighted.mean(sign(Y_FVs_i[2] - FVs)*(Y_FVs_i[1] - Y), weights)
+    })
+    VV <- weighted.mean((iop*Y - d)^2,weights) - weighted.mean(iop*Y - d,weights)^2
+    V <- 4*VV/((2*weighted.mean(Y,weights))^2)
+    return(sqrt(V)/sqrt(length(Y)))
+  }
 }
 
 se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
@@ -180,6 +191,17 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
     se <- sqrt(V/nn)
     return(se)
   }
+}
+
+se_deb3 <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
+  ineq <- match.arg(ineq)
+  if (ineq == "Gini"){
+    se <- se_deb2(Y = Y, FVs = FVs, iop = iop, weights = weights)
+  }
+  else if (ineq == "MLD"){
+    se <- se_deb(Y = Y, FVs = FVs, iop = iop, ineq = ineq, weights = weights)
+  }
+  return(se)
 }
 
 se_rel <- function(Y,FVs,iodeb, ineq = c("Gini", "MLD"), IY, weights = NULL){
