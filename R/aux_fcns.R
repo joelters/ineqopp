@@ -511,7 +511,7 @@ SP <- function(df, npart){
   # p <- hyperSMURF::do.random.partition(nn, npart, seed = 0)
   dfsp <- NULL
   for (i in 1:npart){
-    dfsp[[i]] <- as_tibble(df[p[[i]],])
+    dfsp[[i]] <- dplyr::as_tibble(df[p[[i]],])
   }
   return(list(dfsp = dfsp, indices = p))
 }
