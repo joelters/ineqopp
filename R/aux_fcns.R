@@ -7,7 +7,7 @@ sepi <- function(Y,FVs,iop, ineq = c("Gini", "MLD"), weights = NULL){
       S <- sapply(1:n, function(u){
         a <- sum((1/(n-1))*(iop*(FVs[u] + FVs[-u]) - abs(FVs[u] - FVs[-u])))
       })
-      S <- sum(SS^2)
+      S <- sum(S^2)
       B = 2*mean(Y)
       S = (4/n)*S
       V = (1/B^2)*S
