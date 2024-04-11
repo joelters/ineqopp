@@ -285,15 +285,28 @@ IOD4 <- function(Y,
                           "FVs were lower or equal than 0 and were
                             turned into the value 1."))
           }
-          #Rank of i across j
-          rk <- sapply(FVs1, function(u) sum(FVs2 <= u)/length(FVs2))
-          concind <- weighted.mean(rk*Y1, wt1) - 0.5*weighted.mean(Y1,wt1)
+          #Rank* of i across j
+          if (var(weights) == 0){
+            rk <- sapply(FVs1, function(u) sum((FVs2 < u) - 1 + (FVs2 <= u))/length(FVs2))
+            concind <- mean(rk*Y1)
+          }
+          else{
+            rk <- sapply(FVs1, function(u) sum(wt2*((FVs2 < u) - 1 + (FVs2 <= u)))/sum(wt2))
+            concind <- weighted.mean(rk*Y1, wt1)
+          }
+
 
           # i > j
           #Rank of i across j
           if (i !=j){
-            rk <- sapply(FVs2, function(u) sum(FVs1 <= u)/length(FVs1))
-            concind <- concind + weighted.mean(rk*Y2, wt2) - 0.5*weighted.mean(Y2,wt2)
+            if (var(weights) == 0){
+              rk <- sapply(FVs2, function(u) sum((FVs1 < u) - 1 + (FVs1 <= u))/length(FVs1))
+              concind <- concind + mean(rk*Y2)
+            }
+            else{
+              rk <- sapply(FVs2, function(u) sum(wt1*((FVs1 < u) - 1 + (FVs1 <= u)))/sum(wt1))
+              concind <- concind + weighted.mean(rk*Y2, wt2)
+            }
           }
           # save zeros for FVs and RMSE since we only want to save them on diagonal
           fvss <- rep(0,length(Y1))
