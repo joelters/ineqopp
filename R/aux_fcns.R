@@ -543,10 +543,20 @@ sumUw <- function(w){
   WW <- 0
   n <- length(w)
   n1 <- n - 1
-  for (i in 1:n1){
-    j1 <- i + 1
-    for (j in j1:n){
-      WW <- WW + w[i]*w[j]
+  WW <- sapply(1:n1, function(u){
+    j1 <- u + 1
+    sum(w[u]*w[j1:n])
+  })
+  WW <- sum(WW)
+  return(WW)
+}
+
+sumUw2 <- function(w){
+  WW <- 0
+  n <- length(w)
+  for (i in 1:n){
+    for (j in 1:n){
+      WW <- WW + w[i]*w[j]*(i!=j)
     }
   }
   return(WW)
