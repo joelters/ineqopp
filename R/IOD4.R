@@ -167,14 +167,27 @@ IOD4 <- function(Y,
                   turned into the value 1."))
           }
           #Rank* of i across j
-          rk <- sapply(FVs1, function(u) sum((FVs2 < u) - 1 + (FVs2 <= u))/length(FVs2))
-          concind <- weighted.mean(rk*Y1, wt1)
+          if (var(weights) == 0){
+            rk <- sapply(FVs1, function(u) sum((FVs2 < u) - 1 + (FVs2 <= u))/length(FVs2))
+            concind <- mean(rk*Y1)
+          }
+          else{
+            rk <- sapply(FVs1, function(u) sum(wt2*((FVs2 < u) - 1 + (FVs2 <= u)))/sum(wt2))
+            concind <- weighted.mean(rk*Y1, wt1)
+          }
+
 
           # i > j
           #Rank of i across j
           if (i !=j){
-            rk <- sapply(FVs2, function(u) sum((FVs1 < u) - 1 + (FVs1 <= u))/length(FVs1))
-            concind <- concind + weighted.mean(rk*Y2, wt2)
+            if (var(weights) == 0){
+              rk <- sapply(FVs2, function(u) sum((FVs1 < u) - 1 + (FVs1 <= u))/length(FVs1))
+              concind <- concind + mean(rk*Y2)
+            }
+            else{
+              rk <- sapply(FVs2, function(u) sum(wt1*((FVs1 < u) - 1 + (FVs1 <= u)))/sum(wt1))
+              concind <- concind + weighted.mean(rk*Y2, wt2)
+            }
           }
           # save zeros for FVs and RMSE since we only want to save them on diagonal
           fvss <- rep(0,length(Y1))
@@ -330,16 +343,19 @@ IOD4 <- function(Y,
 
       #Compute denominator
       n <- length(Y)
-      if (is.null(weights) == 1){
-        dencf <- 2*mean(Y)*(n-1)*npart^2*(n-1)
+      if (var(weights) == 0){
+        dencf <- 2*mean(Y)*(n-1)*npart^2
+        iod_gini <- 2*n*concind/dencf
       }
       else{
-        dencf <- 2*weighted.mean(Y,weights)*(n-1)*npart^2
-        # WW <- sumUw(weights)
+        # dencf <- 2*weighted.mean(Y,weights)*(n-1)*npart^2
+        dencf <- 2*weighted.mean(Y,weights)*npart^2
+        iod_gini <- 2*concind/dencf
+        # WW <- sumUw2(weights)
         # dencf <- WW*2*stats::weighted.mean(Y,weights)*npart^2
+        # dencf <- (1/(1 - sum(weights^2)))*2*weighted.mean(Y,weights)*npart^2
       }
-      #Estimate and RMSE1
-      iod_gini <- 2*n*concind/dencf
+
       if ("MLD" %in% ineq){
         iod_mld <- log(stats::weighted.mean(Y,weights)) - iod_mld
       }

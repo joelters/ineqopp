@@ -556,7 +556,7 @@ sumUw2 <- function(w){
   n <- length(w)
   for (i in 1:n){
     for (j in 1:n){
-      WW <- WW + w[i]*w[j]*(i!=j)
+      WW <- WW + w[i]*(i!=j)
     }
   }
   return(WW)
