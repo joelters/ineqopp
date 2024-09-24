@@ -508,12 +508,111 @@ peffect_aux <- function(Y,
 SP <- function(df, npart){
   nn <- nrow(df)
   p <- base::split(sample(nn,nn,replace = FALSE),as.factor(1:npart))
-  # p <- hyperSMURF::do.random.partition(nn, npart, seed = 0)
   dfsp <- NULL
   for (i in 1:npart){
     dfsp[[i]] <- dplyr::as_tibble(df[p[[i]],])
   }
   return(list(dfsp = dfsp, indices = p))
+}
+
+SP_new <- function(df){
+  nn <- nrow(df)
+  # n even and floor(n/2) even, i.e. n divisible by 4
+  if (nn %% 4 == 0){
+    case.cf = 1
+    n2 = nn/2
+    n4 = nn/4
+    cf.ilist = list(ci1 = 1:(n2-1), ci2 = (n2+1):(nn-1),
+                    ci3 = 1:n4, ci4 = (n4 + 1):n2,
+                    ci5 = (n4 + 1):n2, ci6 = 1:n4)
+    cf.jlist = list(cj1 = 2:n2, cj2 = (n2+2):nn,
+                    cj3 = (n2+1):(n2+n4), cj4 = (n2+1):(n2+n4),
+                    cj5 = (n2 + n4 + 1):nn, cj6 = (n2 + n4 + 1):nn)
+  } else if (nn %% 2 == 0 & floor(nn/2) %% 2 != 0){ # n even and floor(n/2) odd
+    case.cf = 2
+    n2 = nn/2
+    cf.ilist = list(ci1 = 1:(n2-1), ci2 = n2:(nn-1),
+                    ci3 = 1:(n2-1-(n2-1)*0.5), ci4 = (n2-(n2-1)*0.5):(n2-1),
+                    ci5 = (n2-(n2-1)*0.5):(n2-1), ci6 = 1:(n2-1-(n2-1)*0.5))
+    cf.jlist = list(cj1 = 2:(n2+1), cj2 = (n2+1):nn,
+                    cj3 = (n2+2):(n2+1+(n2-1)*0.5), cj4 = (n2+2):(n2+1+(n2-1)*0.5),
+                    cj5 = (n2+2+(n2-1)*0.5):nn, cj6 = (n2+2+(n2-1)*0.5):nn)
+  } else if (nn %% 2 != 0 & floor(nn/2) %% 2 == 0){ # n odd and floor(n/2) even
+    case.cf = 3
+    n2 = floor(nn/2)
+    cf.ilist = list(ci1 = 1:n2, ci2 = (n2+1):(nn-1),
+                    ci3 = 1:(n2/2), ci4 = (n2/2 + 1):n2,
+                    ci5 = (n2/2 + 1):n2, ci6 = 1:(n2/2))
+    cf.jlist = list(cj1 = 2:(n2+1), cj2 = (n2+2):nn,
+                    cj3 = (n2+2):(n2+1+n2*0.5), cj4 = (n2+2):(n2+1+n2*0.5),
+                    cj5 = (n2+2+n2*0.5):nn, cj6 = (n2+2+n2*0.5):nn)
+  } else if (nn %% 2 != 0 & floor(nn/2) %% 2 != 0){ # n odd and floor(n/2) odd
+    case.cf = 4
+    n2 = floor(nn/2)
+    cf.ilist = list(ci1 = 1:(n2-1), ci2 = n2:(nn-1),
+                    ci3 = 1:((n2-1)*0.5), ci4 = (n2-(n2-1)*0.5):(n2-1),
+                    ci5 = (n2-(n2-1)*0.5):(n2-1), ci6 = 1:((n2-1)*0.5))
+    cf.jlist = list(cj1 = 2:(n2+2), cj2 = (n2+1):nn,
+                    cj3 = (n2+3):(n2+2+(n2-1)*0.5), cj4 = (n2+3):(n2+2+(n2-1)*0.5),
+                    cj5 = (n2+3+(n2-1)*0.5):nn, cj6 = (n2+3+(n2-1)*0.5):nn)
+  }
+
+  dfcfi = NULL
+  dfcfj = NULL
+  for (kk in 1:6){
+    dfcfi[[kk]] = data.frame(df[cf.ilist[[kk]],], cf.ilist[[kk]])
+    dfcfj[[kk]] = data.frame(df[cf.jlist[[kk]],], cf.jlist[[kk]])
+  }
+  # Arrange stuff for plotting CF
+  # blcks = c("I1","I2","I3","I4","I5","I6")
+  # aux = NULL
+  # for (kk in 1:6){
+  #   if (kk %in% c(1,2)){
+  #     ncf1 = length(cf.ilist[[kk]])
+  #     ncf2 = length(cf.jlist[[kk]])
+  #
+  #     pldf = data.frame(ci = rep(NA,ncf1*(ncf2+1)*0.5),
+  #                       cj = rep(NA,ncf1*(ncf2+1)*0.5),
+  #                       Il = rep(NA,ncf1*(ncf2+1)*0.5))
+  #     cnt = 0
+  #     for (ii in 1:ncf1){
+  #       jj1 = ii
+  #       for (jj in jj1:ncf2){
+  #         cnt = cnt + 1
+  #         pldf[cnt,] = c(cf.ilist[[kk]][ii], cf.jlist[[kk]][jj],blcks[kk])
+  #       }
+  #     }
+  #     aux[[kk]] = pldf
+  #   } else{
+  #     ncf1 = length(cf.ilist[[kk]])
+  #     ncf2 = length(cf.jlist[[kk]])
+  #
+  #     pldf = data.frame(ci = rep(NA,ncf1*ncf2),
+  #                       cj = rep(NA,ncf1*ncf2),
+  #                       Il = rep(NA,ncf1*ncf2))
+  #     cnt = 0
+  #     for (ii in 1:ncf1){
+  #       for (jj in 1:ncf2){
+  #         cnt = cnt + 1
+  #         pldf[cnt,] = c(cf.ilist[[kk]][ii], cf.jlist[[kk]][jj],blcks[kk])
+  #       }
+  #     }
+  #     aux[[kk]] = pldf
+  #   }
+  # }
+  # pldf = do.call(rbind,aux)
+  # pldf$ci = as.numeric(pldf$ci)
+  # pldf$cj = as.numeric(pldf$cj)
+  #
+  # ggplot(pldf,aes(ci,cj, colour = Il)) +
+  #   geom_point()
+    # scale_x_discrete(name ="i",
+    #                  limits=factor(1:nn)) +
+    # scale_y_discrete(name ="j",
+    #                  limits=factor(1:nn)) +
+    # geom_abline(intercept = 0, slope = 1)
+
+  return(list(dfcfi = dfcfi, dfcfj = dfcfj))
 }
 
 dfnotl <- function(dfcf,i,j){
@@ -532,6 +631,12 @@ dfnotl <- function(dfcf,i,j){
   #in a dataframe, if no function is specified it combines everything in a
   #dataframe
   aux <- plyr::ldply(aux)
+}
+
+dfnotl_new <- function(df,dfcfi,dfcfj,k){
+  ind = c(dfcfi[[k]][,ncol(dfcfi[[k]])],dfcfj[[k]][,ncol(dfcfi[[k]])])
+  ind = unique(ind)
+  res = df[-ind,]
 }
 
 weighted.mean2 <- function(X,weights = NULL){
