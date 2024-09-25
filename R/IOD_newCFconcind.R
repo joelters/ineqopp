@@ -1,4 +1,4 @@
-IOD_newCF <- function(Y,
+IOD_newCFconcind <- function(Y,
                  X,
                  CFit = TRUE,
                  npart = 5,

@@ -288,6 +288,7 @@ iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL){
   }
 }
 
+
 iodnumtr <- function(Y, FVs, wt = NULL){
   if (is.null(wt)){
     n <- length(Y)
@@ -307,6 +308,29 @@ iodnumtr <- function(Y, FVs, wt = NULL){
       j1 <- u + 1
       sum(wt[u]*wt[j1:n]*((FVs[u] > FVs[j1:n]) - (FVs[j1:n] > FVs[u]))*
             (Y[u] - Y[j1:n]))
+    })
+    b1 <- sum(a)
+    return(b1)
+  }
+}
+
+iodnumtr_new <- function(Y1, Y2, FVs1, FVs2, wt1 = NULL, wt2 = NULL){
+  if (is.null(wt1)){
+    n1 <- length(Y1)
+    n2 = length(Y2)
+    a <- sapply(1:n1, function(u){
+      sum(((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
+            (Y1[u] - Y2[u:n2]))
+    })
+    b1 <- sum(a)
+    return(b1)
+  }
+  else{
+    n1 <- length(Y1)
+    n2 <- length(Y2)
+    a <- sapply(1:n1, function(u){
+      sum(wt1[u]*wt2[u:n2]*((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
+            (Y1[u] - Y2[u:n2]))
     })
     b1 <- sum(a)
     return(b1)

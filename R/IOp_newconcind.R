@@ -24,6 +24,10 @@
 #' @param fitted_values a logical indicating whether (in sample) fitted values
 #' should be computed. This can be useful for computing partial effects later.
 #' @param weights survey weights adding up to 1
+#' @param rf.cf.ntree number of trees to grow if using Random Forests or Conditional
+#' Inference Forests
+#' @param rf.depth how deep should the Random Forest trees be. See ranger documentation.
+#' @param verbose whether some progress should be reported while the function runs.
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' estimates), relative IOp (if desired) and fitted values (if desired)
 #' @examples
@@ -36,7 +40,8 @@
 #'               X,
 #'               est_method = "Plugin",
 #'               ineq = "Gini",
-#'               ML = "RF",
+#'               ML = "SL",
+#'               ensemble = c("SL.Lasso","SL.CB"),
 #'               sterr = FALSE,
 #'               IOp_rel = TRUE,
 #'               fitted_values = TRUE)
@@ -46,7 +51,7 @@
 #'                est_method = "Debiased",
 #'                CFit = TRUE,
 #'                ineq = "Gini",
-#'                ML = "RF",
+#'                ML = "Lasso",
 #'                sterr = TRUE,
 #'                IOp_rel = TRUE,
 #'                fitted_values = TRUE)
@@ -59,20 +64,23 @@
 #' Terschuur, J. (2022). Debiased Machine Learning Inequality
 #' of Opportunity in Europe. arXiv preprint arXiv:2212.02407.
 #' @export
-IOp_new <- function(Y,
-                X,
-                est_method = c("Plugin","Debiased"),
-                ineq = c("Gini", "MLD",c("Gini", "MLD")),
-                ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
-                ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
-                sterr = TRUE,
-                CFit = TRUE,
-                npart = 5,
-                IOp_rel = FALSE,
-                fitted_values = FALSE,
-                weights = NULL,
-                rf.cf.ntree = 500,
-                rf.depth = NULL){
+IOp_newconcind <- function(Y,
+                 X,
+                 est_method = c("Plugin","Debiased"),
+                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
+                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
+                 ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
+                 sterr = TRUE,
+                 boots = 100,
+                 CFit = TRUE,
+                 npart = 5,
+                 IOp_rel = FALSE,
+                 fitted_values = TRUE,
+                 weights = NULL,
+                 parallel = FALSE,
+                 rf.cf.ntree = 500,
+                 rf.depth = NULL,
+                 verbose = FALSE){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,
@@ -83,21 +91,25 @@ IOp_new <- function(Y,
                IOp_rel = IOp_rel,
                sterr = sterr,
                fitted_values = fitted_values,
-               weights = weights)
+               weights = weights,
+               rf.cf.ntree = rf.cf.ntree,
+               rf.depth = rf.depth)
   }
   else if (est_method == "Debiased"){
-    io <- IOD_new(Y,
-              X,
-              CFit = CFit,
-              npart = npart,
-              ineq = ineq,
-              ML = ML,
-              ensemble = ensemble,
-              sterr = sterr,
-              IOp_rel = IOp_rel,
-              fitted_values = fitted_values,
-              weights = weights,
-              rf.cf.ntree = 500,
-              rf.depth = NULL)
+    io <- IOD_newCFconcind(Y,
+               X,
+               CFit = CFit,
+               npart = npart,
+               ineq = ineq,
+               ML = ML,
+               ensemble = ensemble,
+               sterr = sterr,
+               IOp_rel = IOp_rel,
+               fitted_values = fitted_values,
+               weights = weights,
+               parallel = parallel,
+               rf.cf.ntree = rf.cf.ntree,
+               rf.depth = rf.depth,
+               verbose = verbose)
   }
 }
