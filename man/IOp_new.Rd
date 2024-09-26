@@ -10,10 +10,10 @@ IOp_new(
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
   ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "SL"),
-  ensemble = c("SL.Lasso", "SL.Ridge", "SL.RF", "SL.CIF", "SL.XGB", "SL.CB"),
+  ensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
+  ensemblefolds = 2,
   sterr = TRUE,
   CFit = TRUE,
-  npart = 5,
   IOp_rel = FALSE,
   fitted_values = FALSE,
   weights = NULL,
@@ -31,12 +31,13 @@ IOp_new(
 \item{ensemble}{is a string vector specifying which learners
 should be used in the SuperLearner}
 
+\item{ensemblefolds}{how many folds to use in crossvalidation for ensemble
+methods (i.e. superlearner or OLSensemble)}
+
 \item{sterr}{logical indicating whether standard errors should be computed}
 
 \item{CFit}{logical indicating whether Cross-Fitting should be done in
 the debiased estimators (no inferential guarantee can be given yet if FALSE)}
-
-\item{npart}{in how many parts should the data be split for cross-fitting}
 
 \item{IOp_rel}{logical indicating whether relative IOp should be computed}
 
