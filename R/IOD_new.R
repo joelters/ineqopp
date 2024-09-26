@@ -5,12 +5,14 @@ IOD_new <- function(Y,
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
                 ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
+                ensemblefolds = 2,
                 sterr = TRUE,
                 weights = NULL,
                 IOp_rel = FALSE,
                 fitted_values = FALSE,
                 rf.cf.ntree = 500,
-                rf.depth = NULL){
+                rf.depth = NULL,
+                polynomial = 1){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -23,6 +25,10 @@ IOD_new <- function(Y,
                    Y,
                    ML,
                    ensemble = ensemble,
+                   ensemblefolds = ensemblefolds,
+                   rf.cf.ntree = rf.cf.ntree,
+                   rf.depth = rf.depth,
+                   polynomial = polynomial,
                    FVs = TRUE,
                    weights = weights)
     model <- m$model
@@ -107,8 +113,10 @@ IOD_new <- function(Y,
                        aux$Y,
                        ML,
                        ensemble = ensemble,
+                       ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
                        rf.depth = rf.depth,
+                       polynomial = polynomial,
                        FVs = FALSE,
                        weights = aux$wt)
         model <- m$model
@@ -279,6 +287,10 @@ IOD_new <- function(Y,
                        aux$Y,
                        ML,
                        ensemble = ensemble,
+                       ensemblefolds = ensemblefolds,
+                       rf.cf.ntree = rf.cf.ntree,
+                       rf.depth = rf.depth,
+                       polynomial = polynomial,
                        FVs = FALSE,
                        weights = aux$wt)
         model <- m$model

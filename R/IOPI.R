@@ -3,12 +3,14 @@ IOPI <- function(Y,
                  ineq = c("Gini", "MLD",c("Gini","MLD")),
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                  ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
+                 ensemblefolds = 2,
                  IOp_rel = FALSE,
                  sterr = FALSE,
                  fitted_values = TRUE,
                  weights = NULL,
                  rf.cf.ntree = 500,
-                 rf.depth = NULL){
+                 rf.depth = NULL,
+                 polynomial = 1){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -16,12 +18,14 @@ IOPI <- function(Y,
                 Y,
                 ML = ML,
                 ensemble = ensemble,
+                ensemblefolds = ensemblefolds,
                 ineq = ineq,
                 IOp_rel = IOp_rel,
                 fitted_values = fitted_values,
                 weights = weights,
                 rf.cf.ntree = rf.cf.ntree,
-                rf.depth = rf.depth)
+                rf.depth = rf.depth,
+                polynomial = polynomial)
     #Standard errors
   if(sterr == TRUE){
       warning("For se with plug in set FVs = TRUE")

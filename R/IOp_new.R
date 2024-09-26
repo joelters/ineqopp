@@ -16,10 +16,11 @@
 #' @param ML is a string specifying which machine learner to use
 #' @param ensemble is a string vector specifying which learners
 #' should be used in the SuperLearner
+#' @param ensemblefolds how many folds to use in crossvalidation for ensemble
+#' methods (i.e. superlearner or OLSensemble)
 #' @param sterr logical indicating whether standard errors should be computed
 #' @param CFit logical indicating whether Cross-Fitting should be done in
 #' the debiased estimators (no inferential guarantee can be given yet if FALSE)
-#' @param npart in how many parts should the data be split for cross-fitting
 #' @param IOp_rel logical indicating whether relative IOp should be computed
 #' @param fitted_values a logical indicating whether (in sample) fitted values
 #' should be computed. This can be useful for computing partial effects later.
@@ -64,10 +65,10 @@ IOp_new <- function(Y,
                 est_method = c("Plugin","Debiased"),
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
-                ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
+                ensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
+                ensemblefolds = 2,
                 sterr = TRUE,
                 CFit = TRUE,
-                npart = 5,
                 IOp_rel = FALSE,
                 fitted_values = FALSE,
                 weights = NULL,
@@ -80,6 +81,7 @@ IOp_new <- function(Y,
                ineq = ineq,
                ML = ML,
                ensemble = ensemble,
+               ensemblefolds = ensemblefolds,
                IOp_rel = IOp_rel,
                sterr = sterr,
                fitted_values = fitted_values,
@@ -89,10 +91,10 @@ IOp_new <- function(Y,
     io <- IOD_new(Y,
               X,
               CFit = CFit,
-              npart = npart,
               ineq = ineq,
               ML = ML,
               ensemble = ensemble,
+              ensemblefolds = ensemblefolds,
               sterr = sterr,
               IOp_rel = IOp_rel,
               fitted_values = fitted_values,

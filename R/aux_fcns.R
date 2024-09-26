@@ -791,11 +791,13 @@ mliop <- function(X,
                   Y,
                   ML = c("Lasso","Ridge","RF","CIF","XGB","CB","SL"),
                   ensemble = c("SL.Lasso","SL.Ridge","SL.RF","SL.CIF","SL.XGB","SL.CB"),
+                  ensemblefolds = 2,
                   ineq = c("Gini", "MLD",c("Gini","MLD")),
                   IOp_rel = FALSE,
                   fitted_values = FALSE,
                   rf.cf.ntree = 500,
                   rf.depth = NULL,
+                  polynomial = 1,
                   weights = NULL){
   ML = match.arg(ML)
   # ineq = match.arg(ineq)
@@ -804,8 +806,10 @@ mliop <- function(X,
                  Y,
                  ML,
                  ensemble = ensemble,
+                 ensemblefolds = ensemblefolds,
                  rf.cf.ntree = rf.cf.ntree,
                  rf.depth = rf.depth,
+                 polynomial = polynomial,
                  FVs = TRUE,
                  weights = weights)
   FVs <- m$FVs
