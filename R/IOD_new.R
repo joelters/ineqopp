@@ -105,7 +105,7 @@ IOD_new <- function(Y,
       iod_mld <- 0
       RMSE1 <- rep(0,2)
       res = lapply(1:6, function(u){
-        # browser()
+        browser()
         #Create dataframe with all observations not in I_l
         aux <- dfnotl_new(df,dfcfi,dfcfj,u)
 
@@ -142,9 +142,14 @@ IOD_new <- function(Y,
         if(!is.null(weights)){
           wt2 <- dfcfj[[u]]$wt
         }
+        if (ML == "OLSensemble"){
+          coefs = model$coefs
+          model = model$models
+        } else{coefs = NULL}
+
         X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt))
-        FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML)
-        FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML)
+        FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, coefs = coefs)
+        FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, coefs = coefs)
         FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
         FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
         if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){

@@ -9,7 +9,7 @@ IOp_new(
   X,
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "SL"),
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "OLSensemble", "SL"),
   ensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
   ensemblefolds = 2,
   sterr = TRUE,
