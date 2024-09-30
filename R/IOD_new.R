@@ -105,7 +105,6 @@ IOD_new <- function(Y,
       iod_mld <- 0
       RMSE1 <- rep(0,2)
       res = lapply(1:6, function(u){
-        browser()
         #Create dataframe with all observations not in I_l
         aux <- dfnotl_new(df,dfcfi,dfcfj,u)
 
@@ -120,7 +119,13 @@ IOD_new <- function(Y,
                        polynomial = polynomial,
                        FVs = FALSE,
                        weights = aux$wt)
-        model <- m$model
+        if (ML != "OLSensemble"){
+          model <- m$model
+          coefs = NULL
+        } else{
+          coefs = m$coefs
+          model = m$model
+        }
 
         #Predict fitted values for obs in Ci and Cj
         #using model trained with obs not in Ci or Cj
@@ -142,10 +147,6 @@ IOD_new <- function(Y,
         if(!is.null(weights)){
           wt2 <- dfcfj[[u]]$wt
         }
-        if (ML == "OLSensemble"){
-          coefs = model$coefs
-          model = model$models
-        } else{coefs = NULL}
 
         X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt))
         FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, coefs = coefs)
@@ -171,7 +172,7 @@ IOD_new <- function(Y,
         } else{
           num <- iodnumsq(Y1,FVs1,Y2,FVs2, wt1 = wt1, wt2 = wt2)
         }
-        return(list(nums = num, RMSE1s = RMSE1))
+        return(list(nums = num, RMSE1s = RMSE1, coefs = coefs))
         })
       resnums = sapply(res, function(t){
         t$nums
@@ -182,6 +183,10 @@ IOD_new <- function(Y,
         t$RMSE1s
       })
       RMSE1 = sum(resrmse)
+
+      coefs = sapply(res, function(t){
+        t$coefs
+      })
 
       #Compute denominator
       n <- length(Y)
@@ -268,9 +273,9 @@ IOD_new <- function(Y,
           colnames(jtrel) <- "Gini"
         }
         if (fitted_values == TRUE){
-          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, FVs = FVres))
+          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, FVs = FVres, coefs = coefs))
         } else{
-          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel))
+          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, coefs = coefs))
         }
       }
     }
