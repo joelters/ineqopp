@@ -27,7 +27,7 @@ IOD_new <- function(Y,
     m <- ML::MLest(X,
                    Y,
                    ML,
-                   OLSensemble = ensemble,
+                   OLSensemble = OLSensemble,
                    SL.library = SL.library,
                    ensemblefolds = ensemblefolds,
                    rf.cf.ntree = rf.cf.ntree,
@@ -98,6 +98,7 @@ IOD_new <- function(Y,
     nn <- length(Y)
     weights <- if (is.null(weights)) rep(1/nn,nn) else weights
     df <- dplyr::as_tibble(cbind(cbind(Y = Y, wt = weights),X))
+    names(df)[1] = "Y"
     # reshufle data in case there is some order
     df = df[sample(1:nn),]
     rownames(df) = paste(1:nn)
@@ -116,7 +117,7 @@ IOD_new <- function(Y,
         m <- ML::MLest(dplyr::select(aux,-c(Y,wt)),
                        aux$Y,
                        ML,
-                       OLSensemble = ensemble,
+                       OLSensemble = OLSensemble,
                        SL.library = SL.library,
                        ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
@@ -211,7 +212,7 @@ IOD_new <- function(Y,
       RMSE1 <- sum(RMSE1)
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
+        m <- ML::MLest(X, Y, ML, OLSensemble = OLSensemble, FVs = TRUE, weights = weights)
         FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
         FVres <- FVres*(FVres > 0) + (FVres <= 0)
         if(sum(m$FVres <= 0) != 0){
@@ -303,7 +304,7 @@ IOD_new <- function(Y,
         m <- ML::MLest(dplyr::select(aux,-c(Y,wt)),
                        aux$Y,
                        ML,
-                       OLSensemble = ensemble,
+                       OLSensemble = OLSensemble,
                        SL.library = SL.library,
                        ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
@@ -339,7 +340,7 @@ IOD_new <- function(Y,
       RMSE1 <- sum(RMSE1)
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, ensemble = ensemble, FVs = TRUE, weights = weights)
+        m <- ML::MLest(X, Y, ML, OLSensemble = OLSensemble, FVs = TRUE, weights = weights)
         FVres <- m$FVs
         FVres <- FVres*(FVres > 0) + (FVres <= 0)
         if(sum(m$FVres <= 0) != 0){

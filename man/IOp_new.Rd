@@ -10,15 +10,17 @@ IOp_new(
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
   ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "OLSensemble", "SL"),
-  ensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
-  ensemblefolds = 2,
+  OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
+  SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
+  ensemblefolds = 5,
   sterr = TRUE,
   CFit = TRUE,
   IOp_rel = FALSE,
   fitted_values = FALSE,
   weights = NULL,
   rf.cf.ntree = 500,
-  rf.depth = NULL
+  rf.depth = NULL,
+  mtry = max(floor(ncol(X)/3), 1)
 )
 }
 \arguments{
@@ -27,9 +29,6 @@ IOp_new(
 \item{X}{is a dataframe containing all the circumstances}
 
 \item{ML}{is a string specifying which machine learner to use}
-
-\item{ensemble}{is a string vector specifying which learners
-should be used in the SuperLearner}
 
 \item{ensemblefolds}{how many folds to use in crossvalidation for ensemble
 methods (i.e. superlearner or OLSensemble)}
@@ -45,6 +44,9 @@ the debiased estimators (no inferential guarantee can be given yet if FALSE)}
 should be computed. This can be useful for computing partial effects later.}
 
 \item{weights}{survey weights adding up to 1}
+
+\item{ensemble}{is a string vector specifying which learners
+should be used in the SuperLearner}
 }
 \value{
 list containing IOp estimates, RMSE of the first stage (for Debiased
