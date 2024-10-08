@@ -66,27 +66,33 @@ IOp_new <- function(Y,
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
                       "OLSensemble", "SL"),
-                ensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
-                ensemblefolds = 2,
+                OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
+                SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
+                ensemblefolds = 5,
                 sterr = TRUE,
                 CFit = TRUE,
                 IOp_rel = FALSE,
                 fitted_values = FALSE,
                 weights = NULL,
                 rf.cf.ntree = 500,
-                rf.depth = NULL){
+                rf.depth = NULL,
+                mtry = max(floor(ncol(X)/3), 1)){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,
                X,
                ineq = ineq,
                ML = ML,
-               ensemble = ensemble,
+               OLSensemble = OLSensemble,
+               SL.library = SL.library,
                ensemblefolds = ensemblefolds,
                IOp_rel = IOp_rel,
                sterr = sterr,
                fitted_values = fitted_values,
-               weights = weights)
+               weights = weights,
+               rf.cf.ntree = 500,
+               rf.depth = NULL,
+               mtry = max(floor(ncol(X)/3), 1))
   }
   else if (est_method == "Debiased"){
     io <- IOD_new(Y,
