@@ -90,8 +90,8 @@ IOp_new <- function(Y,
                sterr = sterr,
                fitted_values = fitted_values,
                weights = weights,
-               rf.cf.ntree = 500,
-               rf.depth = NULL,
+               rf.cf.ntree = rf.cf.ntree,
+               rf.depth = rf.depth,
                mtry = max(floor(ncol(X)/3), 1))
   }
   else if (est_method == "Debiased"){
@@ -100,13 +100,15 @@ IOp_new <- function(Y,
               CFit = CFit,
               ineq = ineq,
               ML = ML,
-              ensemble = ensemble,
+              OLSensemble = OLSensemble,
+              SL.library = SL.library,
               ensemblefolds = ensemblefolds,
               sterr = sterr,
               IOp_rel = IOp_rel,
               fitted_values = fitted_values,
               weights = weights,
-              rf.cf.ntree = 500,
-              rf.depth = NULL)
+              rf.cf.ntree = rf.cf.ntree,
+              rf.depth = rf.depth,
+              mtry = mtry)
   }
 }
