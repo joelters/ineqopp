@@ -13,9 +13,15 @@
 #'
 #' @param Y is a vector containing the (continuous) outcome of interest
 #' @param X is a dataframe containing all the circumstances
+#' @param est_method is a string specifying which estimation method to use
+#' (Plugin or Debiased)
+#' @param ineq is a string specifying which inequality measure to use
+#' (Gini or MLD) or a vector of both
 #' @param ML is a string specifying which machine learner to use
-#' @param ensemble is a string vector specifying which learners
-#' should be used in the SuperLearner
+#' @param OLSensemble is a string vector specifying which learners should be
+#' used in OLS ensemble method
+#' @param SL.library is a string vector specifying which learners should be
+#' used in SuperLearner
 #' @param ensemblefolds how many folds to use in crossvalidation for ensemble
 #' methods (i.e. superlearner or OLSensemble)
 #' @param sterr logical indicating whether standard errors should be computed
@@ -25,6 +31,15 @@
 #' @param fitted_values a logical indicating whether (in sample) fitted values
 #' should be computed. This can be useful for computing partial effects later.
 #' @param weights survey weights adding up to 1
+#' @param rf.cf.ntree how many trees should be grown when using RF or CIF
+#' @param rf.depth how deep should trees be grown in RF (NULL is default from ranger)
+#' @param polynomial degree of polynomial to be fitted when using Lasso, Ridge,
+#' Logit Lasso or OLS. 1 just fits the input X. 2 squares all variables and
+#' adds all pairwise interactions. 3 squares and cubes all variables and adds
+#' all pairwise and threewise interactions...
+#' @param mtry number of variables to consider at each split in RF or CIF
+#' @param xgb.nrounds s an integer specifying how many rounds to use in XGB
+#' @param xgb.max.depth an integer specifying how deep trees should be grown in XGB
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' estimates), relative IOp (if desired) and fitted values (if desired)
 #' @examples
@@ -76,6 +91,9 @@ IOp_new <- function(Y,
                 weights = NULL,
                 rf.cf.ntree = 500,
                 rf.depth = NULL,
+                polynomial = 1,
+                xgb.nrounds = 200,
+                xgb.max.depth = 6,
                 mtry = max(floor(ncol(X)/3), 1)){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
@@ -92,7 +110,10 @@ IOp_new <- function(Y,
                weights = weights,
                rf.cf.ntree = rf.cf.ntree,
                rf.depth = rf.depth,
-               mtry = max(floor(ncol(X)/3), 1))
+               polynomial = polynomial,
+               mtry = max(floor(ncol(X)/3), 1),
+               xgb.nrounds = xgb.nrounds,
+               xgb.max.depth = xgb.max.depth)
   }
   else if (est_method == "Debiased"){
     io <- IOD_new(Y,
@@ -109,6 +130,9 @@ IOp_new <- function(Y,
               weights = weights,
               rf.cf.ntree = rf.cf.ntree,
               rf.depth = rf.depth,
-              mtry = mtry)
+              polynomial = polynomial,
+              mtry = mtry,
+              xgb.nrounds = xgb.nrounds,
+              xgb.max.depth = xgb.max.depth)
   }
 }

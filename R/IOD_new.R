@@ -15,7 +15,9 @@ IOD_new <- function(Y,
                 rf.cf.ntree = 500,
                 rf.depth = NULL,
                 polynomial = 1,
-                mtry = max(floor(ncol(X)/3), 1)){
+                mtry = max(floor(ncol(X)/3), 1),
+                xgb.nrounds = 200,
+                xgb.max.depth = 6){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -34,6 +36,8 @@ IOD_new <- function(Y,
                    rf.depth = rf.depth,
                    mtry = mtry,
                    polynomial = polynomial,
+                   xgb.nrounds = xgb.nrounds,
+                   xgb.max.depth = xgb.max.depth,
                    FVs = TRUE,
                    weights = weights)
     model <- m$model
@@ -108,7 +112,6 @@ IOD_new <- function(Y,
     if ("Gini" %in% ineq){
       numcf <- 0
       iod_mld <- 0
-      RMSE1 <- rep(0,2)
       res = lapply(1:6, function(u){
         #Create dataframe with all observations not in I_l
         aux <- dfnotl_new(df,dfcfi,dfcfj,u)
@@ -124,6 +127,8 @@ IOD_new <- function(Y,
                        rf.depth = rf.depth,
                        polynomial = polynomial,
                        mtry = mtry,
+                       xgb.nrounds = xgb.nrounds,
+                       xgb.max.depth = xgb.max.depth,
                        FVs = FALSE,
                        weights = aux$wt)
         if (ML != "OLSensemble"){
@@ -156,8 +161,8 @@ IOD_new <- function(Y,
         }
 
         X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt))
-        FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, coefs = coefs)
-        FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, coefs = coefs)
+        FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, polynomial = polynomial, coefs = coefs)
+        FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, polynomial = polynomial, coefs = coefs)
         FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
         FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
         if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
@@ -173,11 +178,12 @@ IOD_new <- function(Y,
             iod_mld <- iod_mld + num_mld
           }
           #Compute RMSE of first stage
-          RMSE1[u] <- (length(Y1)/length(Y))*
+          RMSE1 <- (length(Y1)/length(Y))*
             sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
         #Square
         } else{
           num <- iodnumsq(Y1,FVs1,Y2,FVs2, wt1 = wt1, wt2 = wt2)
+          RMSE1 = 0
         }
         return(list(nums = num, RMSE1s = RMSE1, coefs = coefs))
         })
@@ -189,7 +195,7 @@ IOD_new <- function(Y,
       resrmse = sapply(res, function(t){
         t$RMSE1s
       })
-      RMSE1 = sum(resrmse)
+      RMSE1 = sum(resrmse[1:2])
 
       coefs = sapply(res, function(t){
         t$coefs
@@ -212,7 +218,18 @@ IOD_new <- function(Y,
       RMSE1 <- sum(RMSE1)
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, OLSensemble = OLSensemble, FVs = TRUE, weights = weights)
+        m <- ML::MLest(X, Y, ML, OLSensemble = OLSensemble,
+                       SL.library = SL.library,
+                       ensemblefolds = ensemblefolds,
+                       rf.cf.ntree = rf.cf.ntree,
+                       rf.depth = rf.depth,
+                       polynomial = polynomial,
+                       mtry = mtry,
+                       xgb.nrounds = xgb.nrounds,
+                       xgb.max.depth = xgb.max.depth,
+                       FVs = TRUE,
+                       weights = weights)
+
         FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
         FVres <- FVres*(FVres > 0) + (FVres <= 0)
         if(sum(m$FVres <= 0) != 0){
@@ -322,7 +339,7 @@ IOD_new <- function(Y,
         wtcf <- dfcf[[i]]$wt
 
         #Estimate fitted values
-        FVs <- ML::FVest(model, X, Y, Xcf, Ycf, ML)
+        FVs <- ML::FVest(model, X, Y, Xcf, Ycf, ML, polynomial = polynomial)
         FVs <- FVs*(FVs > 0) + (FVs <= 0)
         if(sum(m$FVs <= 0) != 0){
           warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were

@@ -20,6 +20,9 @@ IOp_new(
   weights = NULL,
   rf.cf.ntree = 500,
   rf.depth = NULL,
+  polynomial = 1,
+  xgb.nrounds = 200,
+  xgb.max.depth = 6,
   mtry = max(floor(ncol(X)/3), 1)
 )
 }
@@ -28,7 +31,19 @@ IOp_new(
 
 \item{X}{is a dataframe containing all the circumstances}
 
+\item{est_method}{is a string specifying which estimation method to use
+(Plugin or Debiased)}
+
+\item{ineq}{is a string specifying which inequality measure to use
+(Gini or MLD) or a vector of both}
+
 \item{ML}{is a string specifying which machine learner to use}
+
+\item{OLSensemble}{is a string vector specifying which learners should be
+used in OLS ensemble method}
+
+\item{SL.library}{is a string vector specifying which learners should be
+used in SuperLearner}
 
 \item{ensemblefolds}{how many folds to use in crossvalidation for ensemble
 methods (i.e. superlearner or OLSensemble)}
@@ -45,8 +60,20 @@ should be computed. This can be useful for computing partial effects later.}
 
 \item{weights}{survey weights adding up to 1}
 
-\item{ensemble}{is a string vector specifying which learners
-should be used in the SuperLearner}
+\item{rf.cf.ntree}{how many trees should be grown when using RF or CIF}
+
+\item{rf.depth}{how deep should trees be grown in RF (NULL is default from ranger)}
+
+\item{polynomial}{degree of polynomial to be fitted when using Lasso, Ridge,
+Logit Lasso or OLS. 1 just fits the input X. 2 squares all variables and
+adds all pairwise interactions. 3 squares and cubes all variables and adds
+all pairwise and threewise interactions...}
+
+\item{xgb.nrounds}{s an integer specifying how many rounds to use in XGB}
+
+\item{xgb.max.depth}{an integer specifying how deep trees should be grown in XGB}
+
+\item{mtry}{number of variables to consider at each split in RF or CIF}
 }
 \value{
 list containing IOp estimates, RMSE of the first stage (for Debiased

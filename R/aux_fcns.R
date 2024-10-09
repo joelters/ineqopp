@@ -801,6 +801,8 @@ mliop <- function(X,
                   rf.depth = NULL,
                   mtry = max(floor(ncol(X)/3), 1),
                   polynomial = 1,
+                  xgb.nrounds = 200,
+                  xgb.max.depth = 6,
                   weights = NULL){
   ML = match.arg(ML)
   # ineq = match.arg(ineq)
@@ -815,6 +817,8 @@ mliop <- function(X,
                  rf.depth = rf.depth,
                  mtry = mtry,
                  polynomial = polynomial,
+                 xgb.nrounds = xgb.nrounds,
+                 xgb.max.depth = xgb.max.depth,
                  FVs = TRUE,
                  weights = weights)
   FVs <- m$FVs
