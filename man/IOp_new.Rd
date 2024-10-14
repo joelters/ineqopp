@@ -23,6 +23,8 @@ IOp_new(
   polynomial = 1,
   xgb.nrounds = 200,
   xgb.max.depth = 6,
+  cb.iterations = 1000,
+  cb.depth = 6,
   mtry = max(floor(ncol(X)/3), 1)
 )
 }
@@ -72,6 +74,10 @@ all pairwise and threewise interactions...}
 \item{xgb.nrounds}{s an integer specifying how many rounds to use in XGB}
 
 \item{xgb.max.depth}{an integer specifying how deep trees should be grown in XGB}
+
+\item{cb.iterations}{an integer specifying how many iterations to use in CB}
+
+\item{cb.depth}{an integer specifying how deep trees should be grown in CB}
 
 \item{mtry}{number of variables to consider at each split in RF or CIF}
 }

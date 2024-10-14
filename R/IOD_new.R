@@ -17,7 +17,9 @@ IOD_new <- function(Y,
                 polynomial = 1,
                 mtry = max(floor(ncol(X)/3), 1),
                 xgb.nrounds = 200,
-                xgb.max.depth = 6){
+                xgb.max.depth = 6,
+                cb.iterations = 1000,
+                cb.depth = 6){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -38,6 +40,8 @@ IOD_new <- function(Y,
                    polynomial = polynomial,
                    xgb.nrounds = xgb.nrounds,
                    xgb.max.depth = xgb.max.depth,
+                   cb.iterations = cb.iterations,
+                   cb.depth = cb.depth,
                    FVs = TRUE,
                    weights = weights)
     model <- m$model
@@ -129,6 +133,8 @@ IOD_new <- function(Y,
                        mtry = mtry,
                        xgb.nrounds = xgb.nrounds,
                        xgb.max.depth = xgb.max.depth,
+                       cb.iterations = cb.iterations,
+                       cb.depth = cb.depth,
                        FVs = FALSE,
                        weights = aux$wt)
         if (ML != "OLSensemble"){
@@ -227,6 +233,8 @@ IOD_new <- function(Y,
                        mtry = mtry,
                        xgb.nrounds = xgb.nrounds,
                        xgb.max.depth = xgb.max.depth,
+                       cb.iterations = cb.iterations,
+                       cb.depth = cb.depth,
                        FVs = TRUE,
                        weights = weights)
 

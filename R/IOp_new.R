@@ -40,6 +40,8 @@
 #' @param mtry number of variables to consider at each split in RF or CIF
 #' @param xgb.nrounds s an integer specifying how many rounds to use in XGB
 #' @param xgb.max.depth an integer specifying how deep trees should be grown in XGB
+#' @param cb.iterations an integer specifying how many iterations to use in CB
+#' @param cb.depth an integer specifying how deep trees should be grown in CB
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' estimates), relative IOp (if desired) and fitted values (if desired)
 #' @examples
@@ -94,6 +96,8 @@ IOp_new <- function(Y,
                 polynomial = 1,
                 xgb.nrounds = 200,
                 xgb.max.depth = 6,
+                cb.iterations = 1000,
+                cb.depth = 6,
                 mtry = max(floor(ncol(X)/3), 1)){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
@@ -113,7 +117,9 @@ IOp_new <- function(Y,
                polynomial = polynomial,
                mtry = max(floor(ncol(X)/3), 1),
                xgb.nrounds = xgb.nrounds,
-               xgb.max.depth = xgb.max.depth)
+               xgb.max.depth = xgb.max.depth,
+               cb.iterations = cb.iterations,
+               cb.depth = cb.depth)
   }
   else if (est_method == "Debiased"){
     io <- IOD_new(Y,
@@ -133,6 +139,8 @@ IOp_new <- function(Y,
               polynomial = polynomial,
               mtry = mtry,
               xgb.nrounds = xgb.nrounds,
-              xgb.max.depth = xgb.max.depth)
+              xgb.max.depth = xgb.max.depth,
+              cb.iterations = cb.iterations,
+              cb.depth = cb.depth)
   }
 }
