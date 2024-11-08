@@ -157,7 +157,7 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
                               ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
                               (Y[u] - Y[-u])))
       })
-      S <- sum((1/n)*sum(aux^2))
+      S <- (1/n)*sum(aux^2)
       vnum = 4*S
       V <- vnum/((2*mean(Y))^2)
       return(sqrt(V)/sqrt(length(Y)))
