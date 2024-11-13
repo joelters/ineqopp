@@ -25,6 +25,10 @@
 #' @param ensemblefolds how many folds to use in crossvalidation for ensemble
 #' methods (i.e. superlearner or OLSensemble)
 #' @param sterr logical indicating whether standard errors should be computed
+#' @param sterr_type integers 1 or 2, default 1. Specifies which type of standard
+#' errors should be. sterr_type 1 computes only first order variance
+#' (hayek projection variance) and sterr_type 2 is an unbiased variance
+#' estimator of all orders (sigma_u in Iwashita and Klar (2024)).
 #' @param CFit logical indicating whether Cross-Fitting should be done in
 #' the debiased estimators (no inferential guarantee can be given yet if FALSE)
 #' @param IOp_rel logical indicating whether relative IOp should be computed
@@ -76,6 +80,10 @@
 #'
 #' Terschuur, J. (2022). Debiased Machine Learning Inequality
 #' of Opportunity in Europe. arXiv preprint arXiv:2212.02407.
+#'
+#' Iwashita, T., & Klar, B. (2024). A gamma tail statistic and its asymptotics.
+#' Statistica Neerlandica, 78(2), 264-280.
+#'
 #' @export
 IOp_new <- function(Y,
                 X,
@@ -87,6 +95,7 @@ IOp_new <- function(Y,
                 SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
                 ensemblefolds = 5,
                 sterr = TRUE,
+                sterr_type = 1,
                 CFit = TRUE,
                 IOp_rel = FALSE,
                 fitted_values = FALSE,
@@ -131,6 +140,7 @@ IOp_new <- function(Y,
               SL.library = SL.library,
               ensemblefolds = ensemblefolds,
               sterr = sterr,
+              sterr_type = sterr_type,
               IOp_rel = IOp_rel,
               fitted_values = fitted_values,
               weights = weights,

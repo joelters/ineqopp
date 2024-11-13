@@ -40,16 +40,16 @@ sepi <- function(Y,FVs,iop, ineq = c("Gini", "MLD"), weights = NULL){
     }
   }
   else if (ineq == "MLD"){
-      nn <- length(FVs)
-      wt <- if (is.null(weights)) rep(1/nn,nn) else weights
-      th1 <- weighted.mean(FVs,wt)
-      th2 <- weighted.mean(log(FVs),wt)
-      S11 <- nn*sum(wt^2*(FVs - th1)^2)
-      S12 <- nn*sum(wt^2*(FVs-th1)*(log(FVs)-th2))
-      S22 <- nn*sum(wt^2*(log(FVs)- th2)^2)
-      V <- S11/(th1^2) + S22 - 2*S12/th1
-      se = sqrt(V/nn)
-      return(se)
+    nn <- length(FVs)
+    wt <- if (is.null(weights)) rep(1/nn,nn) else weights
+    th1 <- weighted.mean(FVs,wt)
+    th2 <- weighted.mean(log(FVs),wt)
+    S11 <- nn*sum(wt^2*(FVs - th1)^2)
+    S12 <- nn*sum(wt^2*(FVs-th1)*(log(FVs)-th2))
+    S22 <- nn*sum(wt^2*(log(FVs)- th2)^2)
+    V <- S11/(th1^2) + S22 - 2*S12/th1
+    se = sqrt(V/nn)
+    return(se)
   }
 }
 
@@ -158,6 +158,7 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
                               (Y[u] - Y[-u])))
       })
       S <- (1/n)*sum(aux^2)
+      S = var(aux)
       vnum = 4*S
       V <- vnum/((2*mean(Y))^2)
       return(sqrt(V)/sqrt(length(Y)))
@@ -182,6 +183,73 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
       vnum <- 4*S
       wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
       vnum = vnum*sum(wt2^2)
+      vden <- (2*weighted.mean(Y,weights))^2
+      V <- vnum/vden
+      return(sqrt(V))
+    }
+  }
+  else if (ineq == "MLD"){
+    nn <- length(Y)
+    wt <- if (is.null(weights)) rep(1/nn,nn) else weights
+    th1 <- weighted.mean(Y,wt)
+    th2 <- weighted.mean(log(FVs) + (1/FVs)*(Y-FVs), wt)
+    S11 <- nn*sum(wt^2*(Y - th1)^2)
+    S12 <- nn*sum(wt^2*(Y - th1)*(log(FVs) - th2 + (1/FVs)*(Y - FVs)))
+    S22 <- nn*sum(wt^2*(log(FVs) - th2 + (1/FVs)*(Y - FVs))^2)
+    V <- S11/(th1^2) + S22 - 2*S12/th1
+    se <- sqrt(V/nn)
+    return(se)
+  }
+}
+
+se_deb_unb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
+  ineq <- match.arg(ineq)
+  if (ineq == "Gini"){
+    n <- length(Y)
+    if(is.null(weights)){
+      aux <- sapply(1:n, function(u){
+        a <- sum((iop*(Y[u] + Y[-u]) -
+                    ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
+                    (Y[u] - Y[-u])))
+        b = sum((iop*(Y[u] + Y[-u]) -
+                   ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
+                   (Y[u] - Y[-u]))^2)
+      })
+      C1 <- sum(aux[1,]^2)
+      C2 = sum(aux[2,])
+      Un = (1/(n*(n-1)))*sum(aux[1,])
+      n4m = n*(n-1)*(n-2)
+      VU = (4*C1 - 2*C2)/n4m - (4*n-6)/((n-2)*(n-3))*Un^2
+      VU = VU/((2*mean(Y))^2)
+      seU = sqrt(VU/n)
+      return(seU)
+    }
+    else{
+      aux <- sapply(1:n, function(u){
+        a <- sum((iop*(Y[u] + Y[-u]) -
+                    ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
+                    (Y[u] - Y[-u])))
+        b = sum((iop*(Y[u] + Y[-u]) -
+                   ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
+                   (Y[u] - Y[-u]))^2)
+        if (u!=n){
+          u1 <- u + 1
+          WW <- sum(weights[u]*weights[u1:n])
+        }
+        else{
+          WW <- 0
+        }
+        return(c(a,b,WW))
+      })
+      # aux <- do.call(rbind, aux)
+      C1 <- sum(aux[1,]^2)
+      C2 = sum(aux[2,])
+      Un = (1/(n*(n-1)))*sum(aux[1,])
+      WW <- sum(aux[3,])
+      n4m = n*(n-1)*(n-2)
+      VU = (4*C1 - 2*C2)/n4m - (4*n-6)/((n-2)*(n-3))*Un^2
+      wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+      vnum = VU*sum(wt2^2)
       vden <- (2*weighted.mean(Y,weights))^2
       V <- vnum/vden
       return(sqrt(V))
@@ -256,7 +324,7 @@ se_rel <- function(Y,FVs,iodeb, ineq = c("Gini", "MLD"), IY, weights = NULL){
     th3 <- weighted.mean(log(Y), wt)
 
     PSI <- wt*matrix(c(Y - th1, log(FVs) - th2 + (1/FVs)*(Y - FVs),
-                    log(Y) - th3),nn,3)
+                       log(Y) - th3),nn,3)
     S <- t(PSI) %*% PSI
     grad <- c(((1/th1)*(th2 - th3))/(log(th1) - th3)^2,
               -1/(log(th1) - th3),
@@ -350,10 +418,10 @@ peffect_aux <- function(Y,
                         pe_rel = FALSE,
                         weights = NULL){
   if (ML == "Lasso" | ML == "Ridge"){
-	Xk <- dplyr::select(as_tibble(X),-dplyr::starts_with(circ))
+    Xk <- dplyr::select(as_tibble(X),-dplyr::starts_with(circ))
   }
   else{
-  	Xk <- dplyr::select(X,-all_of(circ))
+    Xk <- dplyr::select(X,-all_of(circ))
   }
 
   res <- IOD(Y,
@@ -410,9 +478,9 @@ peffect_aux <- function(Y,
     if (is.null(weights)){
       a <- lapply(1:n, function(u){
         S11aux <- sum((1/(n-1))*(iop_gini*(Y[u] + Y[-u]) -
-                        ((FVs[u] - FVs[-u] > 0) - (FVs[u] - FVs[-u] < 0))*(Y[u] - Y[-u])))
+                                   ((FVs[u] - FVs[-u] > 0) - (FVs[u] - FVs[-u] < 0))*(Y[u] - Y[-u])))
         S22aux <- sum((1/(n-1))*(iopk_g*(Y[u] + Y[-u]) -
-                        ((FVsk[u] - FVsk[-u] > 0) - (FVsk[u] - FVsk[-u] < 0))*(Y[u] - Y[-u])))
+                                   ((FVsk[u] - FVsk[-u] > 0) - (FVsk[u] - FVsk[-u] < 0))*(Y[u] - Y[-u])))
         data.frame(S11aux = S11aux, S22aux = S22aux)
       })
       a <- do.call(rbind,a)
@@ -630,11 +698,11 @@ SP_new <- function(df){
   #
   # ggplot(pldf,aes(ci,cj, colour = Il)) +
   #   geom_point()
-    # scale_x_discrete(name ="i",
-    #                  limits=factor(1:nn)) +
-    # scale_y_discrete(name ="j",
-    #                  limits=factor(1:nn)) +
-    # geom_abline(intercept = 0, slope = 1)
+  # scale_x_discrete(name ="i",
+  #                  limits=factor(1:nn)) +
+  # scale_y_discrete(name ="j",
+  #                  limits=factor(1:nn)) +
+  # geom_abline(intercept = 0, slope = 1)
 
   return(list(dfcfi = dfcfi, dfcfj = dfcfj))
 }
@@ -752,7 +820,7 @@ npiop <- function(X,
   df <- dplyr::as_tibble(cbind(Y = Y,X))
   circs <- colnames(dplyr::select(df,-Y))
   aux <- df %>% dplyr::group_by_at(circs) %>%
-                dplyr::mutate(FVs = mean(Y))
+    dplyr::mutate(FVs = mean(Y))
   FVs <- aux$FVs
   res <- sapply(ineq, function(u){
     if (u == "Gini"){

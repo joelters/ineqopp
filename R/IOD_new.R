@@ -9,6 +9,7 @@ IOD_new <- function(Y,
                 SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
                 ensemblefolds = 5,
                 sterr = TRUE,
+                sterr_type = 1,
                 weights = NULL,
                 IOp_rel = FALSE,
                 fitted_values = FALSE,
@@ -56,7 +57,12 @@ IOD_new <- function(Y,
       iodeb <- io_deb(Y, FVs, ineq = u, weights = weights)
       #SEs
       if (sterr == TRUE){
-        se <- se_deb(Y, FVs, iodeb, ineq = u, weights = weights)
+        if (sterr_type == 1){
+          se <- se_deb(Y, FVs, iodeb, ineq = u, weights = weights)
+        }
+        else if (sterr_type == 2){
+          se <- se_deb_unb(Y, FVs, iodeb, ineq = u, weights = weights)
+        }
       } else{se <- NULL}
       if (u == "Gini" & IOp_rel == TRUE){
         G <- acid::weighted.gini(Y,weights)
@@ -249,7 +255,12 @@ IOD_new <- function(Y,
       }
       #SE
       if (sterr == TRUE){
-        se_gini <- se_deb(Y, FVres, iod_gini, ineq = "Gini", weights = weights)
+        if (sterr_type == 1){
+          se_gini <- se_deb(Y, FVres, iod_gini, ineq = "Gini", weights = weights)
+        }
+        else if (sterr_type == 2){
+          se_gini <- se_deb_unb(Y, FVres, iod_gini, ineq = "Gini", weights = weights)
+        }
         if ("MLD" %in% ineq){
           se_mld <- se_deb(Y, FVres, iod_mld, ineq = "MLD", weights = weights)
         }
