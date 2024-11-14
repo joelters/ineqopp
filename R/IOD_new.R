@@ -15,7 +15,8 @@ IOD_new <- function(Y,
                 fitted_values = FALSE,
                 rf.cf.ntree = 500,
                 rf.depth = NULL,
-                polynomial = 1,
+                polynomial.Lasso = 1,
+                polynomial.Ridge = 1,
                 mtry = max(floor(ncol(X)/3), 1),
                 xgb.nrounds = 200,
                 xgb.max.depth = 6,
@@ -38,7 +39,8 @@ IOD_new <- function(Y,
                    rf.cf.ntree = rf.cf.ntree,
                    rf.depth = rf.depth,
                    mtry = mtry,
-                   polynomial = polynomial,
+                   polynomial.Lasso = polynomial.Lasso,
+                   polynomial.Ridge = polynomial.Ridge,
                    xgb.nrounds = xgb.nrounds,
                    xgb.max.depth = xgb.max.depth,
                    cb.iterations = cb.iterations,
@@ -135,7 +137,8 @@ IOD_new <- function(Y,
                        ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
                        rf.depth = rf.depth,
-                       polynomial = polynomial,
+                       polynomial.Lasso = polynomial.Lasso,
+                       polynomial.Ridge = polynomial.Ridge,
                        mtry = mtry,
                        xgb.nrounds = xgb.nrounds,
                        xgb.max.depth = xgb.max.depth,
@@ -173,8 +176,12 @@ IOD_new <- function(Y,
         }
 
         X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt))
-        FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, polynomial = polynomial, coefs = coefs)
-        FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, polynomial = polynomial, coefs = coefs)
+        FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, polynomial.Lasso = polynomial.Lasso,
+                          polynomial.Ridge = polynomial.Ridge,
+                          coefs = coefs)
+        FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, polynomial.Lasso = polynomial.Lasso,
+                          polynomial.Ridge = polynomial.Ridge,
+                          coefs = coefs)
         FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
         FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
         if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
@@ -235,7 +242,8 @@ IOD_new <- function(Y,
                        ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
                        rf.depth = rf.depth,
-                       polynomial = polynomial,
+                       polynomial.Lasso = polynomial.Lasso,
+                       polynomial.Ridge = polynomial.Ridge,
                        mtry = mtry,
                        xgb.nrounds = xgb.nrounds,
                        xgb.max.depth = xgb.max.depth,
@@ -346,7 +354,8 @@ IOD_new <- function(Y,
                        rf.cf.ntree = rf.cf.ntree,
                        rf.depth = rf.depth,
                        mtry = mtry,
-                       polynomial = polynomial,
+                       polynomial.Lasso = polynomial.Lasso,
+                       polynomial.Ridge = polynomial.Ridge,
                        FVs = FALSE,
                        weights = aux$wt)
         model <- m$model
@@ -358,7 +367,9 @@ IOD_new <- function(Y,
         wtcf <- dfcf[[i]]$wt
 
         #Estimate fitted values
-        FVs <- ML::FVest(model, X, Y, Xcf, Ycf, ML, polynomial = polynomial)
+        FVs <- ML::FVest(model, X, Y, Xcf, Ycf, ML,
+                         polynomial.Lasso = polynomial.Lasso,
+                         polynomial.Ridge = polynomial.Ridge)
         FVs <- FVs*(FVs > 0) + (FVs <= 0)
         if(sum(m$FVs <= 0) != 0){
           warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were

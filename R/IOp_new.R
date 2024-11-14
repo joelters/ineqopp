@@ -37,10 +37,12 @@
 #' @param weights survey weights adding up to 1
 #' @param rf.cf.ntree how many trees should be grown when using RF or CIF
 #' @param rf.depth how deep should trees be grown in RF (NULL is default from ranger)
-#' @param polynomial degree of polynomial to be fitted when using Lasso, Ridge,
-#' Logit Lasso or OLS. 1 just fits the input X. 2 squares all variables and
-#' adds all pairwise interactions. 3 squares and cubes all variables and adds
-#' all pairwise and threewise interactions...
+#' @param polynomial.Lasso degree of polynomial to be fitted when using Lasso.
+#' 1 just fits the input X. 2 squares all variables and adds
+#' all pairwise interactions. 3 squares and cubes all variables and adds all
+#' pairwise and threewise interactions...
+#' @param polynomial.Ridge degree of polynomial to be fitted when using Ridge,
+#' see polynomial.Lasso for more info.
 #' @param mtry number of variables to consider at each split in RF or CIF
 #' @param xgb.nrounds s an integer specifying how many rounds to use in XGB
 #' @param xgb.max.depth an integer specifying how deep trees should be grown in XGB
@@ -102,7 +104,8 @@ IOp_new <- function(Y,
                 weights = NULL,
                 rf.cf.ntree = 500,
                 rf.depth = NULL,
-                polynomial = 1,
+                polynomial.Lasso = 1,
+                polynomial.Ridge = 1,
                 xgb.nrounds = 200,
                 xgb.max.depth = 6,
                 cb.iterations = 1000,
@@ -123,7 +126,8 @@ IOp_new <- function(Y,
                weights = weights,
                rf.cf.ntree = rf.cf.ntree,
                rf.depth = rf.depth,
-               polynomial = polynomial,
+               polynomial.Lasso = polynomial.Lasso,
+               polynomial.Ridge = polynomial.Ridge,
                mtry = max(floor(ncol(X)/3), 1),
                xgb.nrounds = xgb.nrounds,
                xgb.max.depth = xgb.max.depth,
@@ -146,7 +150,8 @@ IOp_new <- function(Y,
               weights = weights,
               rf.cf.ntree = rf.cf.ntree,
               rf.depth = rf.depth,
-              polynomial = polynomial,
+              polynomial.Lasso = polynomial.Lasso,
+              polynomial.Ridge = polynomial.Ridge,
               mtry = mtry,
               xgb.nrounds = xgb.nrounds,
               xgb.max.depth = xgb.max.depth,
