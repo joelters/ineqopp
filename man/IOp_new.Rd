@@ -21,7 +21,8 @@ IOp_new(
   weights = NULL,
   rf.cf.ntree = 500,
   rf.depth = NULL,
-  polynomial = 1,
+  polynomial.Lasso = 1,
+  polynomial.Ridge = 1,
   xgb.nrounds = 200,
   xgb.max.depth = 6,
   cb.iterations = 1000,
@@ -72,10 +73,13 @@ should be computed. This can be useful for computing partial effects later.}
 
 \item{rf.depth}{how deep should trees be grown in RF (NULL is default from ranger)}
 
-\item{polynomial}{degree of polynomial to be fitted when using Lasso, Ridge,
-Logit Lasso or OLS. 1 just fits the input X. 2 squares all variables and
-adds all pairwise interactions. 3 squares and cubes all variables and adds
-all pairwise and threewise interactions...}
+\item{polynomial.Lasso}{degree of polynomial to be fitted when using Lasso.
+1 just fits the input X. 2 squares all variables and adds
+all pairwise interactions. 3 squares and cubes all variables and adds all
+pairwise and threewise interactions...}
+
+\item{polynomial.Ridge}{degree of polynomial to be fitted when using Ridge,
+see polynomial.Lasso for more info.}
 
 \item{xgb.nrounds}{s an integer specifying how many rounds to use in XGB}
 
