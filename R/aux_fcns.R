@@ -202,6 +202,61 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
   }
 }
 
+se_deb_alt <- function(Y, FVs, alpha, iop, ineq = c("Gini", "MLD"), weights = NULL){
+  ineq <- match.arg(ineq)
+  if (ineq == "Gini"){
+    n <- length(Y)
+    if(is.null(weights)){
+      aux <- sapply(1:n, function(u){
+        a <- sum((1/(n-1))*(iop*(Y[u] + Y[-u]) -
+                              abs(FVs[u] - FVs[-u]) - alpha[u]*(Y[u] - FVs[u]) -
+                              alpha[-u]*(Y[-u] - FVs[-u])))
+      })
+      S <- (1/n)*sum(aux^2)
+      S = var(aux)
+      vnum = 4*S
+      V <- vnum/((2*mean(Y))^2)
+      return(sqrt(V)/sqrt(length(Y)))
+    }
+    else{
+      aux <- lapply(1:n, function(u){
+        jt <- sum((1/(n-1))*(iop*(Y[u] + Y[-u]) -
+                               abs(FVs[u] - FVs[-u]) - alpha[u]*(Y[u] - FVs[u]) -
+                               alpha[-u]*(Y[-u] - FVs[-u])))
+        if (u!=n){
+          u1 <- u + 1
+          WW <- sum(weights[u]*weights[u1:n])
+        }
+        else{
+          WW <- 0
+        }
+        data.frame(S = jt, WW = WW)
+      })
+      aux <- do.call(rbind, aux)
+      S <- sum((1/n)*aux$S^2)
+      WW <- sum(aux$WW)
+      vnum <- 4*S
+      wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+      vnum = vnum*sum(wt2^2)
+      vden <- (2*weighted.mean(Y,weights))^2
+      V <- vnum/vden
+      return(sqrt(V))
+    }
+  }
+  else if (ineq == "MLD"){
+    nn <- length(Y)
+    wt <- if (is.null(weights)) rep(1/nn,nn) else weights
+    th1 <- weighted.mean(Y,wt)
+    th2 <- weighted.mean(log(FVs) + (1/FVs)*(Y-FVs), wt)
+    S11 <- nn*sum(wt^2*(Y - th1)^2)
+    S12 <- nn*sum(wt^2*(Y - th1)*(log(FVs) - th2 + (1/FVs)*(Y - FVs)))
+    S22 <- nn*sum(wt^2*(log(FVs) - th2 + (1/FVs)*(Y - FVs))^2)
+    V <- S11/(th1^2) + S22 - 2*S12/th1
+    se <- sqrt(V/nn)
+    return(se)
+  }
+}
+
 se_deb_unb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
   ineq <- match.arg(ineq)
   if (ineq == "Gini"){
@@ -356,6 +411,26 @@ iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL){
   }
 }
 
+iodnumsq_alt <- function(Y1,FVs1,Y2,FVs2, a1, a2, wt1 = NULL, wt2 = NULL){
+  if (is.null(wt1)){
+    n1 <- length(Y1)
+    a <- sapply(1:n1, function(u){
+      sum(abs(FVs1[u] - FVs2) + a1[u]*(Y1[u] - FVs1[u]) + a2*(Y2 - FVs2))
+    })
+    b1 <- sum(a)
+    return(b1)
+  }
+  else{
+    n1 <- length(Y1)
+    a <- sapply(1:n1, function(u){
+      sum(wt1[u]*wt2*(abs(FVs1[u] - FVs2) + a1[u]*(Y1[u] - FVs1[u]) + a2*(Y2 - FVs2)))
+    })
+    b1 <- sum(a)
+    return(b1)
+  }
+}
+
+
 
 iodnumtr <- function(Y, FVs, wt = NULL){
   if (is.null(wt)){
@@ -399,6 +474,28 @@ iodnumtr_new <- function(Y1, Y2, FVs1, FVs2, wt1 = NULL, wt2 = NULL){
     a <- sapply(1:n1, function(u){
       sum(wt1[u]*wt2[u:n2]*((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
             (Y1[u] - Y2[u:n2]))
+    })
+    b1 <- sum(a)
+    return(b1)
+  }
+}
+
+iodnumtr_new_alt <- function(Y1, Y2, FVs1, FVs2, a1, a2, wt1 = NULL, wt2 = NULL){
+  if (is.null(wt1)){
+    n1 <- length(Y1)
+    n2 = length(Y2)
+    a <- sapply(1:n1, function(u){
+      sum(abs(FVs1[u] - FVs2[u:n2]) + a1[u]*(Y1[u] - FVs1[u]) + a2[u:n2]*(Y2[u:n2] - FVs2[u:n2]))
+    })
+    b1 <- sum(a)
+    return(b1)
+  }
+  else{
+    n1 <- length(Y1)
+    n2 <- length(Y2)
+    a <- sapply(1:n1, function(u){
+      sum(wt1[u]*wt2[u:n2]*
+            (abs(FVs1[u] - FVs2[u:n2]) + a1[u]*(Y1[u] - FVs1[u]) + a2[u:n2]*(Y2[u:n2] - FVs2[u:n2])))
     })
     b1 <- sum(a)
     return(b1)
