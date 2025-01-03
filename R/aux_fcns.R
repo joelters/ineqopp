@@ -390,24 +390,53 @@ se_rel <- function(Y,FVs,iodeb, ineq = c("Gini", "MLD"), IY, weights = NULL){
   }
 }
 
-iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL){
+# iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL){
+#   if (is.null(wt1)){
+#     n1 <- length(Y1)
+#     a <- lapply(1:n1, function(u){
+#       sum(((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
+#             (Y1[u] - Y2))
+#     })
+#     b1 <- sum(a)
+#     return(b1)
+#   }
+#   else{
+#     n1 <- length(Y1)
+#     a <- sapply(1:n1, function(u){
+#       sum(wt1[u]*wt2*((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
+#             (Y1[u] - Y2))
+#     })
+#     b1 <- sum(a)
+#     return(b1)
+#   }
+# }
+
+iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL, FVs01, FVs02){
   if (is.null(wt1)){
     n1 <- length(Y1)
-    a <- sapply(1:n1, function(u){
-      sum(((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
-            (Y1[u] - Y2))
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
+                  (Y1[u] - Y2))
+      a2 <- (((FVs1[u] > FVs2) - (FVs2 > FVs1[u])) !=
+               ((FVs01[u] > FVs02) - (FVs02 > FVs01[u])))
+      list(a1 = a1, a2 = a2)
     })
-    b1 <- sum(a)
-    return(b1)
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
   }
   else{
     n1 <- length(Y1)
-    a <- sapply(1:n1, function(u){
-      sum(wt1[u]*wt2*((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
-            (Y1[u] - Y2))
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(wt1[u]*wt2*((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
+                  (Y1[u] - Y2))
+      a2 <- (((FVs1[u] > FVs2) - (FVs2 > FVs1[u])) !=
+               ((FVs01[u] > FVs02) - (FVs02 > FVs01[u])))
+      list(a1 = a1, a2 = a2)
     })
-    b1 <- sum(a)
-    return(b1)
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
   }
 }
 
@@ -457,26 +486,57 @@ iodnumtr <- function(Y, FVs, wt = NULL){
   }
 }
 
-iodnumtr_new <- function(Y1, Y2, FVs1, FVs2, wt1 = NULL, wt2 = NULL){
+# iodnumtr_new <- function(Y1, Y2, FVs1, FVs2, wt1 = NULL, wt2 = NULL){
+#   if (is.null(wt1)){
+#     n1 <- length(Y1)
+#     n2 = length(Y2)
+#     a <- sapply(1:n1, function(u){
+#       sum(((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
+#             (Y1[u] - Y2[u:n2]))
+#     })
+#     b1 <- sum(a)
+#     return(b1)
+#   }
+#   else{
+#     n1 <- length(Y1)
+#     n2 <- length(Y2)
+#     a <- sapply(1:n1, function(u){
+#       sum(wt1[u]*wt2[u:n2]*((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
+#             (Y1[u] - Y2[u:n2]))
+#     })
+#     b1 <- sum(a)
+#     return(b1)
+#   }
+# }
+
+iodnumtr_new <- function(Y1, Y2, FVs1, FVs2, wt1 = NULL, wt2 = NULL, FVs01, FVs02){
   if (is.null(wt1)){
     n1 <- length(Y1)
     n2 = length(Y2)
-    a <- sapply(1:n1, function(u){
-      sum(((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
             (Y1[u] - Y2[u:n2]))
+      a2 <- (((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u])) !=
+        ((FVs01[u] > FVs02[u:n2]) - (FVs02[u:n2] > FVs01[u])))
+      list(a1 = a1, a2 = a2)
     })
-    b1 <- sum(a)
-    return(b1)
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
   }
   else{
     n1 <- length(Y1)
     n2 <- length(Y2)
-    a <- sapply(1:n1, function(u){
-      sum(wt1[u]*wt2[u:n2]*((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(wt1[u]*wt2[u:n2]*((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
             (Y1[u] - Y2[u:n2]))
+      a2 <- (((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u])) !=
+               ((FVs01[u] > FVs02[u:n2]) - (FVs02[u:n2] > FVs01[u])))
+      list(a1 = a1, a2 = a2)
     })
-    b1 <- sum(a)
-    return(b1)
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
   }
 }
 

@@ -110,7 +110,8 @@ IOp_new <- function(Y,
                 xgb.max.depth = 6,
                 cb.iterations = 1000,
                 cb.depth = 6,
-                mtry = max(floor(ncol(X)/3), 1)){
+                mtry = max(floor(ncol(X)/3), 1),
+                FVs0 = NULL){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,
@@ -156,6 +157,7 @@ IOp_new <- function(Y,
               xgb.nrounds = xgb.nrounds,
               xgb.max.depth = xgb.max.depth,
               cb.iterations = cb.iterations,
-              cb.depth = cb.depth)
+              cb.depth = cb.depth,
+              FVs0 = FVs0)
   }
 }

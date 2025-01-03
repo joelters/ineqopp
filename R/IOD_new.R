@@ -21,7 +21,8 @@ IOD_new <- function(Y,
                 xgb.nrounds = 200,
                 xgb.max.depth = 6,
                 cb.iterations = 1000,
-                cb.depth = 6){
+                cb.depth = 6,
+                FVs0 = NULL){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -112,8 +113,11 @@ IOD_new <- function(Y,
   }
   else{
     nn <- length(Y)
+    if (is.null(FVs0)){
+      FVs0 = rep(0,nn)
+    }
     weights <- if (is.null(weights)) rep(1/nn,nn) else weights
-    df <- dplyr::as_tibble(cbind(cbind(Y = Y, wt = weights),X))
+    df <- dplyr::as_tibble(cbind(cbind(Y = Y, wt = weights, FVs0 = FVs0),X))
     names(df)[1] = "Y"
     # reshufle data in case there is some order
     df = df[sample(1:nn),]
@@ -124,12 +128,13 @@ IOD_new <- function(Y,
     if ("Gini" %in% ineq){
       numcf <- 0
       iod_mld <- 0
+      sgns = NULL
       res = lapply(1:6, function(u){
         #Create dataframe with all observations not in I_l
         aux <- dfnotl_new(df,dfcfi,dfcfj,u)
 
         #Train model with observations not in I_l (not in K = i or K = j)
-        m <- ML::MLest(dplyr::select(aux,-c(Y,wt)),
+        m <- ML::MLest(dplyr::select(aux,-c(Y,wt,FVs0)),
                        aux$Y,
                        ML,
                        OLSensemble = OLSensemble,
@@ -163,19 +168,21 @@ IOD_new <- function(Y,
         #predictions on Cj with model trained with obs
         #not in Ci or Cj
 
-        X1 <- dplyr::select(dfcfi[[u]][,-c(ncol(dfcfi[[u]]))], -c(Y,wt))
+        X1 <- dplyr::select(dfcfi[[u]][,-c(ncol(dfcfi[[u]]))], -c(Y,wt,FVs0))
         Y1 <- dfcfi[[u]]$Y
+        FVs01 <- dfcfi[[u]]$FVs0
         if(!is.null(weights)){
           wt1 <- dfcfi[[u]]$wt
         }
         else{wt1 <- NULL}
 
         Y2 <- dfcfj[[u]]$Y
+        FVs02 <- dfcfj[[u]]$FVs0
         if(!is.null(weights)){
           wt2 <- dfcfj[[u]]$wt
         }
 
-        X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt))
+        X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt,FVs0))
         FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, polynomial.Lasso = polynomial.Lasso,
                           polynomial.Ridge = polynomial.Ridge,
                           coefs = coefs)
@@ -191,7 +198,9 @@ IOD_new <- function(Y,
         }
         #Triangle
         if(u %in% c(1,2)){
-          num <- iodnumtr_new(Y1,Y2,FVs1,FVs2,wt1 = wt1, wt2 = wt2)
+          num <- iodnumtr_new(Y1,Y2,FVs1,FVs2,wt1 = wt1, wt2 = wt2, FVs01 = FVs01, FVs02 = FVs02)
+          sgns[[u]] <- num[[2]]
+          num <- num[[1]]
           if ("MLD" %in% ineq){
             num_mld <- sum(wtmld*(log(FVs1) + (1/FVs1)*(Y1-FVs1)))
             iod_mld <- iod_mld + num_mld
@@ -201,10 +210,12 @@ IOD_new <- function(Y,
             sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
         #Square
         } else{
-          num <- iodnumsq(Y1,FVs1,Y2,FVs2, wt1 = wt1, wt2 = wt2)
+          num <- iodnumsq(Y1,FVs1,Y2,FVs2, wt1 = wt1, wt2 = wt2, FVs01 = FVs01, FVs02 = FVs02)
+          sgns[[u]] <- num[[2]]
+          num <- num[[1]]
           RMSE1 = 0
         }
-        return(list(nums = num, RMSE1s = RMSE1, coefs = coefs))
+        return(list(nums = num, RMSE1s = RMSE1, coefs = coefs, sgns = sgns))
         })
       resnums = sapply(res, function(t){
         t$nums
@@ -218,6 +229,10 @@ IOD_new <- function(Y,
 
       coefs = sapply(res, function(t){
         t$coefs
+      })
+
+      sgns = sapply(res, function(t){
+        t$sgns
       })
 
       #Compute denominator
@@ -307,13 +322,14 @@ IOD_new <- function(Y,
                                   "se" = c(se_gini, se_mld)),
                       RMSE1 = RMSE1,
                       IOp_rel = rbind("IOp_rel" = c("Gini" = IOpr_gini, "MLD" = IOpr_mld),
-                                      "se" = c(se_rel_gini, se_rel_mld)), FVs = FVres))
+                                      "se" = c(se_rel_gini, se_rel_mld)), FVs = FVres,
+                      sgns = sgns))
         }else{
           return(list(IOp = rbind("IOp" = c("Gini" = iod_gini, "MLD" = iod_mld),
                                   "se" = c(se_gini, se_mld)),
                       RMSE1 = RMSE1,
                       IOp_rel = rbind("IOp_rel" = c("Gini" = IOpr_gini, "MLD" = IOpr_mld),
-                                      "se" = c(se_rel_gini, se_rel_mld))))
+                                      "se" = c(se_rel_gini, se_rel_mld)), sgns = sgns))
         }
       }
       else {
@@ -324,9 +340,9 @@ IOD_new <- function(Y,
           colnames(jtrel) <- "Gini"
         }
         if (fitted_values == TRUE){
-          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, FVs = FVres, coefs = coefs))
+          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, FVs = FVres, coefs = coefs, sgns = sgns))
         } else{
-          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, coefs = coefs))
+          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, coefs = coefs,sgns = sgns))
         }
       }
     }

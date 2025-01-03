@@ -27,7 +27,8 @@ IOp_new(
   xgb.max.depth = 6,
   cb.iterations = 1000,
   cb.depth = 6,
-  mtry = max(floor(ncol(X)/3), 1)
+  mtry = max(floor(ncol(X)/3), 1),
+  FVs0 = NULL
 )
 }
 \arguments{
