@@ -128,7 +128,6 @@ IOD_new <- function(Y,
     if ("Gini" %in% ineq){
       numcf <- 0
       iod_mld <- 0
-      sgns = NULL
       res = lapply(1:6, function(u){
         #Create dataframe with all observations not in I_l
         aux <- dfnotl_new(df,dfcfi,dfcfj,u)
@@ -199,7 +198,7 @@ IOD_new <- function(Y,
         #Triangle
         if(u %in% c(1,2)){
           num <- iodnumtr_new(Y1,Y2,FVs1,FVs2,wt1 = wt1, wt2 = wt2, FVs01 = FVs01, FVs02 = FVs02)
-          sgns[[u]] <- num[[2]]
+          sgns <- num[[2]]
           num <- num[[1]]
           if ("MLD" %in% ineq){
             num_mld <- sum(wtmld*(log(FVs1) + (1/FVs1)*(Y1-FVs1)))
@@ -211,7 +210,7 @@ IOD_new <- function(Y,
         #Square
         } else{
           num <- iodnumsq(Y1,FVs1,Y2,FVs2, wt1 = wt1, wt2 = wt2, FVs01 = FVs01, FVs02 = FVs02)
-          sgns[[u]] <- num[[2]]
+          sgns <- num[[2]]
           num <- num[[1]]
           RMSE1 = 0
         }
@@ -231,7 +230,7 @@ IOD_new <- function(Y,
         t$coefs
       })
 
-      sgns = sapply(res, function(t){
+      sgns = lapply(res, function(t){
         t$sgns
       })
 
