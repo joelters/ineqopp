@@ -45,7 +45,9 @@ IOPI <- function(Y,
                 extFVs = extFVs)
     #Standard errors
   if(sterr == TRUE){
-      warning("For se with plug in set FVs = TRUE")
+    if (fitted_values != TRUE){
+      stop("For se with plug in set FVs = TRUE")
+    }
       FVs <- iopi$FVs
       se <- sepi(Y,FVs,iopi$IOp, ineq = ineq, weights = weights)
   }
