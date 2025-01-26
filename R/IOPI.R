@@ -18,7 +18,8 @@ IOPI <- function(Y,
                  xgb.nrounds = 200,
                  xgb.max.depth = 6,
                  cb.iterations = 1000,
-                 cb.depth = 6){
+                 cb.depth = 6,
+                 extFVs = NULL){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -40,7 +41,8 @@ IOPI <- function(Y,
                 xgb.nrounds = xgb.nrounds,
                 xgb.max.depth = xgb.max.depth,
                 cb.iterations = cb.iterations,
-                cb.depth = cb.depth)
+                cb.depth = cb.depth,
+                extFVs = extFVs)
     #Standard errors
   if(sterr == TRUE){
       warning("For se with plug in set FVs = TRUE")

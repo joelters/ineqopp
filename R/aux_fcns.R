@@ -1031,29 +1031,35 @@ mliop <- function(X,
                   xgb.max.depth = 6,
                   cb.iterations = 1000,
                   cb.depth = 6,
-                  weights = NULL){
+                  weights = NULL,
+                  extFVs = NULL){
   ML = match.arg(ML)
   # ineq = match.arg(ineq)
   #Estimate FVs
-  m <- ML::MLest(X,
-                 Y,
-                 ML,
-                 OLSensemble = ensemble,
-                 SL.library = SL.library,
-                 ensemblefolds = ensemblefolds,
-                 rf.cf.ntree = rf.cf.ntree,
-                 rf.depth = rf.depth,
-                 mtry = mtry,
-                 polynomial.Lasso = polynomial.Lasso,
-                 polynomial.Ridge = polynomial.Ridge,
-                 xgb.nrounds = xgb.nrounds,
-                 xgb.max.depth = xgb.max.depth,
-                 cb.iterations = cb.iterations,
-                 cb.depth = cb.depth,
-                 FVs = TRUE,
-                 weights = weights)
-  FVs <- m$FVs
-  FVs <- FVs*(FVs > 0) + (FVs <= 0)
+  if (is.null(extFVs)){
+    m <- ML::MLest(X,
+                   Y,
+                   ML,
+                   OLSensemble = ensemble,
+                   SL.library = SL.library,
+                   ensemblefolds = ensemblefolds,
+                   rf.cf.ntree = rf.cf.ntree,
+                   rf.depth = rf.depth,
+                   mtry = mtry,
+                   polynomial.Lasso = polynomial.Lasso,
+                   polynomial.Ridge = polynomial.Ridge,
+                   xgb.nrounds = xgb.nrounds,
+                   xgb.max.depth = xgb.max.depth,
+                   cb.iterations = cb.iterations,
+                   cb.depth = cb.depth,
+                   FVs = TRUE,
+                   weights = weights)
+    FVs <- m$FVs
+  }
+  if (!is.null(extFVs)){
+    FVs <- extFVs
+  }
+
   if(sum(FVs <= 0) != 0){
     warning(paste(sum(FVs <= 0),"FVs were lower or equal than 0 and were
                     turned into the value 1."))

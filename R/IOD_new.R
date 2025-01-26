@@ -22,7 +22,8 @@ IOD_new <- function(Y,
                 xgb.max.depth = 6,
                 cb.iterations = 1000,
                 cb.depth = 6,
-                FVs0 = NULL){
+                FVs0 = NULL,
+                extFVs = NULL){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -31,7 +32,8 @@ IOD_new <- function(Y,
   # ineq = match.arg(ineq)
   if (CFit == FALSE){
     #Model and FVs estimation
-    m <- ML::MLest(X,
+    if(is.null(extFVs)){
+      m <- ML::MLest(X,
                    Y,
                    ML,
                    OLSensemble = OLSensemble,
@@ -49,8 +51,12 @@ IOD_new <- function(Y,
                    FVs = TRUE,
                    weights = weights)
     model <- m$model
-    #we round to avoid floating issues with sign function
-    FVs <- round(m$FVs,7)*(m$FVs > 0) + 1*(m$FVs > 0)
+    FVs <- m$FVs
+    }
+    if(!is.null(extFVs)){
+      FVs = extFVs
+    }
+
     if(sum(m$FVs <= 0) != 0){
       warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were
                     turned into the value 1."))

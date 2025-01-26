@@ -111,7 +111,8 @@ IOp_new <- function(Y,
                 cb.iterations = 1000,
                 cb.depth = 6,
                 mtry = max(floor(ncol(X)/3), 1),
-                FVs0 = NULL){
+                FVs0 = NULL,
+                extFVs = NULL){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,
@@ -133,7 +134,8 @@ IOp_new <- function(Y,
                xgb.nrounds = xgb.nrounds,
                xgb.max.depth = xgb.max.depth,
                cb.iterations = cb.iterations,
-               cb.depth = cb.depth)
+               cb.depth = cb.depth,
+               extFVs = extFVs)
   }
   else if (est_method == "Debiased"){
     io <- IOD_new(Y,
@@ -158,6 +160,7 @@ IOp_new <- function(Y,
               xgb.max.depth = xgb.max.depth,
               cb.iterations = cb.iterations,
               cb.depth = cb.depth,
-              FVs0 = FVs0)
+              FVs0 = FVs0,
+              extFVs = extFVs)
   }
 }

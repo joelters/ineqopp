@@ -31,7 +31,7 @@ IOD_newCFconcind <- function(Y,
                    weights = weights)
     model <- m$model
     #we round to avoid floating issues with sign function
-    FVs <- round(m$FVs,7)*(m$FVs > 0) + 1*(m$FVs > 0)
+    FVs <- m$FVs
     if(sum(m$FVs <= 0) != 0){
       warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were
                     turned into the value 1."))
