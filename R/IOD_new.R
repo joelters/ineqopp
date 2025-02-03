@@ -88,10 +88,8 @@ IOD_new <- function(Y,
       else if (IOp_rel == FALSE){return(c(IOp = iodeb, se = se))}
     })
     if (IOp_rel == TRUE){
-      print(res)
       res_rel <- rbind(res["IOp_rel",],res["se_rel",])
-      print(res_rel)
-      rownames(res_rel) <- c("IOp_rel", "se_rel")
+      rownames(res_rel) <- c("IOp_rel", "se")
       colnames(res_rel) <- ineq
       if (sterr == TRUE){
         resiop <- rbind(res["IOp",],res["se",])
