@@ -57,8 +57,8 @@ IOD_new <- function(Y,
       FVs = extFVs
     }
 
-    if(sum(m$FVs <= 0) != 0){
-      warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were
+    if(sum(FVs <= 0) != 0){
+      warning(paste(sum(FVs <= 0),"FVs were lower or equal than 0 and were
                     turned into the value 1."))
     }
     res <- sapply(ineq, function(u){
