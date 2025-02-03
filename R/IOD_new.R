@@ -77,7 +77,8 @@ IOD_new <- function(Y,
         G <- acid::weighted.gini(Y,weights)
         G <- as.numeric(G[2])
         iorel <- iodeb/G
-        return(c(IOp = iodeb, IOp_rel = iorel, se = se))
+        se_rel <- se_rel(Y,FVs,iodeb, ineq = ineq, IY = G, weights = weights)
+        return(c(IOp = iodeb, IOp_rel = iorel, se = se, se_rel = se_rel))
       }
       else if (u == "MLD" & IOp_rel == TRUE){
         MLD <- mld(Y,weights)
@@ -87,12 +88,15 @@ IOD_new <- function(Y,
       else if (IOp_rel == FALSE){return(c(IOp = iodeb, se = se))}
     })
     if (IOp_rel == TRUE){
-      res_rel <- rbind(res["IOp_rel",],NULL)
-      rownames(res_rel) <- "IOp_rel"
+      print(res)
+      res_rel <- rbind(res["IOp_rel",],res["se_rel",])
+      print(res_rel)
+      rownames(res_rel) <- c("IOp_rel", "se_rel")
       colnames(res_rel) <- ineq
       if (sterr == TRUE){
         resiop <- rbind(res["IOp",],res["se",])
         rownames(resiop) <- c("IOp","se")
+
       }
       else {
         resiop <- rbind(res["IOp",],NULL)
