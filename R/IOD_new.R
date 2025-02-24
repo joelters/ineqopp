@@ -57,8 +57,8 @@ IOD_new <- function(Y,
       FVs = extFVs
     }
 
-    if(sum(m$FVs <= 0) != 0){
-      warning(paste(sum(m$FVs <= 0),"FVs were lower or equal than 0 and were
+    if(sum(FVs <= 0) != 0){
+      warning(paste(sum(FVs <= 0),"FVs were lower or equal than 0 and were
                     turned into the value 1."))
     }
     res <- sapply(ineq, function(u){
@@ -88,10 +88,8 @@ IOD_new <- function(Y,
       else if (IOp_rel == FALSE){return(c(IOp = iodeb, se = se))}
     })
     if (IOp_rel == TRUE){
-      print(res)
       res_rel <- rbind(res["IOp_rel",],res["se_rel",])
-      print(res_rel)
-      rownames(res_rel) <- c("IOp_rel", "se_rel")
+      rownames(res_rel) <- c("IOp_rel", "se")
       colnames(res_rel) <- ineq
       if (sterr == TRUE){
         resiop <- rbind(res["IOp",],res["se",])
