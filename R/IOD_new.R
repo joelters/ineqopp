@@ -259,27 +259,32 @@ IOD_new <- function(Y,
       RMSE1 <- sum(RMSE1)
       #FVs
       if (fitted_values == TRUE | sterr == TRUE){
-        m <- ML::MLest(X, Y, ML, OLSensemble = OLSensemble,
-                       SL.library = SL.library,
-                       ensemblefolds = ensemblefolds,
-                       rf.cf.ntree = rf.cf.ntree,
-                       rf.depth = rf.depth,
-                       polynomial.Lasso = polynomial.Lasso,
-                       polynomial.Ridge = polynomial.Ridge,
-                       mtry = mtry,
-                       xgb.nrounds = xgb.nrounds,
-                       xgb.max.depth = xgb.max.depth,
-                       cb.iterations = cb.iterations,
-                       cb.depth = cb.depth,
-                       FVs = TRUE,
-                       weights = weights)
+        if(is.null(extFVs)){
+          m <- ML::MLest(X, Y, ML, OLSensemble = OLSensemble,
+                         SL.library = SL.library,
+                         ensemblefolds = ensemblefolds,
+                         rf.cf.ntree = rf.cf.ntree,
+                         rf.depth = rf.depth,
+                         polynomial.Lasso = polynomial.Lasso,
+                         polynomial.Ridge = polynomial.Ridge,
+                         mtry = mtry,
+                         xgb.nrounds = xgb.nrounds,
+                         xgb.max.depth = xgb.max.depth,
+                         cb.iterations = cb.iterations,
+                         cb.depth = cb.depth,
+                         FVs = TRUE,
+                         weights = weights)
 
-        FVres <- round(m$FVs,7) #we round to avoid floating issues with sign function
-        FVres <- FVres*(FVres > 0) + (FVres <= 0)
-        if(sum(m$FVres <= 0) != 0){
-          warning(paste(sum(m$FVres <= 0),"FVs were lower or equal than 0 and were
-                      turned into the value 1."))
+          FVres <- m$FVs
+          }
         }
+        if(!is.null(extFVs)){
+          FVres = extFVs
+        }
+      FVres <- FVres*(FVres > 0) + (FVres <= 0)
+      if(sum(m$FVres <= 0) != 0){
+        warning(paste(sum(m$FVres <= 0),"FVs were lower or equal than 0 and were
+                        turned into the value 1."))
       } else if (fitted_values == FALSE & sterr == FALSE){
         FVres <- NULL
       }
