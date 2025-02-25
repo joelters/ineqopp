@@ -50,7 +50,7 @@ IOPI <- function(Y,
     }
       FVs <- iopi$FVs
       # se <- sepi(Y,FVs,iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
-      se = se_deb(Y, FVs, iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
+      se = se_deb(Y, FVs, as.matrix(iopi$IOp)[1,1], ineq = ineq, weights = weights)
   }
 
   if (fitted_values == TRUE){
