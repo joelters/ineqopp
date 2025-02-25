@@ -276,16 +276,17 @@ IOD_new <- function(Y,
                          weights = weights)
 
           FVres <- m$FVs
-          }
         }
         if(!is.null(extFVs)){
           FVres = extFVs
         }
-      FVres <- FVres*(FVres > 0) + (FVres <= 0)
-      if(sum(m$FVres <= 0) != 0){
-        warning(paste(sum(m$FVres <= 0),"FVs were lower or equal than 0 and were
+        if(sum(FVres <= 0) != 0){
+          warning(paste(sum(FVres <= 0),"FVs were lower or equal than 0 and were
                         turned into the value 1."))
-      } else if (fitted_values == FALSE & sterr == FALSE){
+        }
+        FVres <- FVres*(FVres > 0) + (FVres <= 0)
+      }
+      else if (fitted_values == FALSE & sterr == FALSE){
         FVres <- NULL
       }
       #SE
