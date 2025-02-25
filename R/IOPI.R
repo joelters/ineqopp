@@ -49,7 +49,8 @@ IOPI <- function(Y,
       stop("For se with plug in set FVs = TRUE")
     }
       FVs <- iopi$FVs
-      se <- sepi(Y,FVs,iopi$IOp, ineq = ineq, weights = weights)
+      # se <- sepi(Y,FVs,iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
+      se = se_deb(Y, FVs, iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
   }
 
   if (fitted_values == TRUE){
@@ -58,6 +59,9 @@ IOPI <- function(Y,
   }
   if (sterr == TRUE){
     if (IOp_rel == TRUE){
+      se_rel = NA
+      se = c(se,se_rel)
+      warning("se for IOp rel plug in not coded")
       aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
       names(se) <- c(rbind(ineq,aux))
       iopi <- c(iopi)
