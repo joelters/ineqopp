@@ -19,6 +19,10 @@ IOPI <- function(Y,
                  xgb.max.depth = 6,
                  cb.iterations = 1000,
                  cb.depth = 6,
+                 torch.epochs = 50,
+                 torch.hidden_units = c(64, 32),
+                 torch.lr = 0.01,
+                 torch.dropout = 0.2,
                  extFVs = NULL){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
@@ -42,6 +46,10 @@ IOPI <- function(Y,
                 xgb.max.depth = xgb.max.depth,
                 cb.iterations = cb.iterations,
                 cb.depth = cb.depth,
+                torch.epochs = torch.epochs,
+                torch.hidden_units = torch.hidden_units,
+                torch.lr = torch.lr,
+                torch.dropout = torch.dropout,
                 extFVs = extFVs)
     #Standard errors
   if(sterr == TRUE){

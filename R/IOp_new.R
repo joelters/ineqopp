@@ -48,6 +48,14 @@
 #' @param xgb.max.depth an integer specifying how deep trees should be grown in XGB
 #' @param cb.iterations an integer specifying how many iterations to use in CB
 #' @param cb.depth an integer specifying how deep trees should be grown in CB
+#' @param torch.epochs an integer specifying the number of epochs (full passes through the dataset)
+#'  to use when training the Torch neural network.
+#' @param torch.hidden_units a numeric vector specifying the number of neurons in
+#'  each hidden layer of the Torch neural network.
+#' @param torch.lr a numeric value specifying the learning rate to be used for the
+#' optimizer when training the Torch neural network.
+#' @param torch.dropout a numeric value between 0 and 1 specifying the dropout
+#' rate for regularization in the Torch neural network.
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' estimates), relative IOp (if desired) and fitted values (if desired)
 #' @examples
@@ -91,7 +99,7 @@ IOp_new <- function(Y,
                 X,
                 est_method = c("Plugin","Debiased"),
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
-                ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
+                ML = c("Lasso","Ridge","RF","CIF","XGB","CB","Torch",
                       "OLSensemble", "SL"),
                 OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                 SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
@@ -110,6 +118,10 @@ IOp_new <- function(Y,
                 xgb.max.depth = 6,
                 cb.iterations = 1000,
                 cb.depth = 6,
+                torch.epochs = 50,
+                torch.hidden_units = c(64, 32),
+                torch.lr = 0.01,
+                torch.dropout = 0.2,
                 mtry = max(floor(ncol(X)/3), 1),
                 FVs0 = NULL,
                 extFVs = NULL){
@@ -135,6 +147,10 @@ IOp_new <- function(Y,
                xgb.max.depth = xgb.max.depth,
                cb.iterations = cb.iterations,
                cb.depth = cb.depth,
+               torch.epochs = torch.epochs,
+               torch.hidden_units = torch.hidden_units,
+               torch.lr = torch.lr,
+               torch.dropout = torch.dropout,
                extFVs = extFVs)
   }
   else if (est_method == "Debiased"){
@@ -160,6 +176,10 @@ IOp_new <- function(Y,
               xgb.max.depth = xgb.max.depth,
               cb.iterations = cb.iterations,
               cb.depth = cb.depth,
+              torch.epochs = torch.epochs,
+              torch.hidden_units = torch.hidden_units,
+              torch.lr = torch.lr,
+              torch.dropout = torch.dropout,
               FVs0 = FVs0,
               extFVs = extFVs)
   }
