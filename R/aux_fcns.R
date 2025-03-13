@@ -1014,7 +1014,7 @@ npiop <- function(X,
 
 mliop <- function(X,
                   Y,
-                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
+                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB","Torch",
                          "OLSensemble", "SL"),
                   OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                   SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
