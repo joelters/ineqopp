@@ -5,7 +5,7 @@ IOp_nlls <- function(Y,
                      ineq = c("Gini", "MLD",c("Gini", "MLD")),
                      sterr = TRUE,
                      sterr_type = 1,
-                     CFit = TRUE,
+                     CFit = FALSE,
                      IOp_rel = FALSE,
                      fitted_values = FALSE,
                      weights = NULL,
@@ -72,12 +72,12 @@ IOp_nlls <- function(Y,
       n1 = nn - 1
       aux = sapply(1:n1, function(t){
         t1 = t + 1
-        abs(FVs[t] - FVs[t1:nn]) + (alpha[t] - alpha[t1:nn])*(Y[t] - Y[t1:nn] - FVs[t] + FVs[t1:nn])
+        sum(abs(FVs[t] - FVs[t1:nn]) + (alpha[t] - alpha[t1:nn])*(Y[t] - Y[t1:nn] - FVs[t] + FVs[t1:nn]))
       })
       aux = (2/(nn*(nn-1)))*sum(aux)
       iodeb = aux/(2*mean(Y))
       if (sterr == TRUE){
-        se = se_deb_nlls(Y,FVs,aplha,iodeb,weights)
+        se = se_deb_nlls(Y,FVs,alpha,iodeb,weights)
       }
       else {se = NULL}
       if (IOp_rel == TRUE){
