@@ -202,6 +202,46 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
   }
 }
 
+se_deb_nlls <- function(Y, FVs, alpha, iop, weights = NULL){
+  n <- length(Y)
+  if(is.null(weights)){
+    aux <- sapply(1:n, function(u){
+      a <- sum((1/(n-1))*(iop*(Y[u] + Y[-u]) -
+                            abs(FVs[u] - FVs[-u]) -
+                            (alpha[u] - alpha[-u])*(Y[u] - Y[-u] - FVs[u] + FVs[-u])))
+    })
+    S <- (1/n)*sum(aux^2)
+    S = var(aux)
+    vnum = 4*S
+    V <- vnum/((2*mean(Y))^2)
+    return(sqrt(V)/sqrt(length(Y)))
+  }
+  else{
+    aux <- lapply(1:n, function(u){
+      jt <- sum((1/(n-1))*(iop*(Y[u] + Y[-u]) -
+                             abs(FVs[u] - FVs[-u]) -
+                             (alpha[u] - alpha[-u])*(Y[u] - Y[-u] - FVs[u] + FVs[-u])))
+      if (u!=n){
+        u1 <- u + 1
+        WW <- sum(weights[u]*weights[u1:n])
+      }
+      else{
+        WW <- 0
+      }
+      data.frame(S = jt, WW = WW)
+    })
+    aux <- do.call(rbind, aux)
+    S <- sum((1/n)*aux$S^2)
+    WW <- sum(aux$WW)
+    vnum <- 4*S
+    wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+    vnum = vnum*sum(wt2^2)
+    vden <- (2*weighted.mean(Y,weights))^2
+    V <- vnum/vden
+    return(sqrt(V))
+  }
+}
+
 se_deb_alt <- function(Y, FVs, alpha, iop, ineq = c("Gini", "MLD"), weights = NULL){
   ineq <- match.arg(ineq)
   if (ineq == "Gini"){
@@ -388,6 +428,55 @@ se_rel <- function(Y,FVs,iodeb, ineq = c("Gini", "MLD"), IY, weights = NULL){
     se <- sqrt(V/nn)
     return(se)
   }
+}
+
+se_rel_nlls <- function(Y,FVs,alpha,iodeb, IY, weights = NULL){
+  n <- length(Y)
+  S11 <- 0
+  S22 <- 0
+  S12 <- 0
+  S <- 0
+  if (is.null(weights)){
+    SS <- lapply(1:n, function(u){
+      S11aux <- sum((1/(n-1))*(iodeb*(Y[u] + Y[-u]) -
+                                 abs(FVs[u] - FVs[-u]) -
+                                 (alpha[u] - alpha[-u])*(Y[u] - Y[-u] - FVs[u] + FVs[-u])))
+      S22aux <- sum((1/(n-1))*(IY*(Y[u] + Y[-u]) - abs(Y[u] - Y[-u])))
+      data.frame(S11aux = S11aux, S22aux = S22aux)
+    })
+    SS <- do.call(rbind,SS)
+    S11 <- sum((1/n)*SS$S11aux^2)
+    S22 <- sum((1/n)*SS$S22aux^2)
+    S12 <- sum((1/n)*SS$S11aux*SS$S22aux)
+    V <- (1/(mean(Y)^2))*((S11/(IY^2)) + ((iodeb^2)/(IY^4))*S22 - 2*((iodeb)/(IY^3))*S12)
+    se <- sqrt(V/n)
+  }
+  else{
+    SS <- lapply(1:n, function(u){
+      S11aux <- sum((1/(n-1))*(iodeb*(Y[u] + Y[-u]) -
+                                 abs(FVs[u] - FVs[-u]) -
+                                 (alpha[u] - alpha[-u])*(Y[u] - Y[-u] - FVs[u] + FVs[-u])))
+      S22aux <- sum((1/(n-1))*(IY*(Y[u] + Y[-u]) - abs(Y[u] - Y[-u])))
+      if (u!=n){
+        u1 <- u + 1
+        WWaux <- sum(weights[u]*weights[u1:n])
+      }
+      else{
+        WWaux <- 0
+      }
+      data.frame(S11aux = S11aux, S22aux = S22aux, WWaux = WWaux)
+    })
+    SS <- do.call(rbind,SS)
+    S11 <- sum((1/n)*SS$S11aux^2)
+    S22 <- sum((1/n)*SS$S22aux^2)
+    S12 <- sum((1/n)*SS$S11aux*SS$S22aux)
+    WW <- sum(SS$WWaux)
+    B = weighted.mean(Y,weights)
+    wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+    V <- (1/(B^2))*((S11/(IY^2)) + ((iodeb^2)/(IY^4))*S22 - 2*((iodeb)/(IY^3))*S12)*sum(wt2^2)
+    se <- sqrt(V)
+  }
+  return(se)
 }
 
 # iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL){

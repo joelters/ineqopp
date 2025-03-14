@@ -9,7 +9,7 @@ IOp_new(
   X,
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "OLSensemble", "SL"),
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "OLSensemble", "SL"),
   OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
   SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
   ensemblefolds = 5,
@@ -27,6 +27,10 @@ IOp_new(
   xgb.max.depth = 6,
   cb.iterations = 1000,
   cb.depth = 6,
+  torch.epochs = 50,
+  torch.hidden_units = c(64, 32),
+  torch.lr = 0.01,
+  torch.dropout = 0.2,
   mtry = max(floor(ncol(X)/3), 1),
   FVs0 = NULL,
   extFVs = NULL
@@ -90,6 +94,18 @@ see polynomial.Lasso for more info.}
 \item{cb.iterations}{an integer specifying how many iterations to use in CB}
 
 \item{cb.depth}{an integer specifying how deep trees should be grown in CB}
+
+\item{torch.epochs}{an integer specifying the number of epochs (full passes through the dataset)
+to use when training the Torch neural network.}
+
+\item{torch.hidden_units}{a numeric vector specifying the number of neurons in
+each hidden layer of the Torch neural network.}
+
+\item{torch.lr}{a numeric value specifying the learning rate to be used for the
+optimizer when training the Torch neural network.}
+
+\item{torch.dropout}{a numeric value between 0 and 1 specifying the dropout
+rate for regularization in the Torch neural network.}
 
 \item{mtry}{number of variables to consider at each split in RF or CIF}
 }
