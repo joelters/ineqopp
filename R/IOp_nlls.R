@@ -62,7 +62,9 @@ IOp_nlls <- function(Y,
       lhat = sapply(1:nn, function(u){
         (1/(nn-1))*sum((FVs[u] >= FVs[-u]) - (FVs[u] < FVs[-u]))
       })
-      score = X*FVs
+      Xm = model.matrix(~.,X)
+      Xm = Xm[,2:ncol(Xm)]
+      score = Xm*FVs
       alpham = ML::MLest(score,lhat,ML = "OLS")
       alpha = alpham$FVs
       n1 = nn - 1
