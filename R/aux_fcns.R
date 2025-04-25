@@ -1308,13 +1308,13 @@ mliop <- function(X,
                   weights = NULL,
                   extFVs = NULL){
   ML = match.arg(ML)
-  # ineq = match.arg(ineq)
+  ineq = match.arg(ineq)
   #Estimate FVs
   if (is.null(extFVs)){
     m <- ML::MLest(X,
                    Y,
                    ML,
-                   OLSensemble = ensemble,
+                   OLSensemble = OLSensemble,
                    SL.library = SL.library,
                    ensemblefolds = ensemblefolds,
                    rf.cf.ntree = rf.cf.ntree,
@@ -1357,7 +1357,6 @@ mliop <- function(X,
       else {return(iopi)}
     }
     else if (u == "MLD"){
-      browser()
       iopi <- mld(FVs, weights)
       if (IOp_rel == TRUE){
         MLD <- mld(Y,weights)

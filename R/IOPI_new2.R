@@ -1,4 +1,4 @@
-IOPI <- function(Y,
+IOPI_new2 <- function(Y,
                  X,
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
                         "OLSensemble","SL"),
