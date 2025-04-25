@@ -15,6 +15,7 @@ IOD_new <- function(Y,
                 fitted_values = FALSE,
                 rf.cf.ntree = 500,
                 rf.depth = NULL,
+                cf.depth = Inf,
                 polynomial.Lasso = 1,
                 polynomial.Ridge = 1,
                 mtry = max(floor(ncol(X)/3), 1),
@@ -45,6 +46,7 @@ IOD_new <- function(Y,
                    ensemblefolds = ensemblefolds,
                    rf.cf.ntree = rf.cf.ntree,
                    rf.depth = rf.depth,
+                   cf.depth = cf.depth,
                    mtry = mtry,
                    polynomial.Lasso = polynomial.Lasso,
                    polynomial.Ridge = polynomial.Ridge,
@@ -157,6 +159,7 @@ IOD_new <- function(Y,
                        ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
                        rf.depth = rf.depth,
+                       cf.depth = cf.depth,
                        polynomial.Lasso = polynomial.Lasso,
                        polynomial.Ridge = polynomial.Ridge,
                        mtry = mtry,
@@ -220,10 +223,6 @@ IOD_new <- function(Y,
           num <- iodnumtr_new(Y1,Y2,FVs1,FVs2,wt1 = wt1, wt2 = wt2, FVs01 = FVs01, FVs02 = FVs02)
           sgns <- num[[2]]
           num <- num[[1]]
-          if ("MLD" %in% ineq){
-            num_mld <- sum(wtmld*(log(FVs1) + (1/FVs1)*(Y1-FVs1)))
-            iod_mld <- iod_mld + num_mld
-          }
           #Compute RMSE of first stage
           RMSE1 <- (length(Y1)/length(Y))*
             sqrt(weighted.mean2(((Y1 - FVs1)^2),wt1))
@@ -277,6 +276,7 @@ IOD_new <- function(Y,
                          ensemblefolds = ensemblefolds,
                          rf.cf.ntree = rf.cf.ntree,
                          rf.depth = rf.depth,
+                         cf.depth = cf.depth,
                          polynomial.Lasso = polynomial.Lasso,
                          polynomial.Ridge = polynomial.Ridge,
                          mtry = mtry,

@@ -15,8 +15,6 @@
 #' @param X is a dataframe containing all the circumstances
 #' @param est_method is a string specifying which estimation method to use
 #' (Plugin or Debiased)
-#' @param ineq is a string specifying which inequality measure to use
-#' (Gini or MLD) or a vector of both
 #' @param ML is a string specifying which machine learner to use
 #' @param OLSensemble is a string vector specifying which learners should be
 #' used in OLS ensemble method
@@ -25,10 +23,6 @@
 #' @param ensemblefolds how many folds to use in crossvalidation for ensemble
 #' methods (i.e. superlearner or OLSensemble)
 #' @param sterr logical indicating whether standard errors should be computed
-#' @param sterr_type integers 1 or 2, default 1. Specifies which type of standard
-#' errors should be. sterr_type 1 computes only first order variance
-#' (hayek projection variance) and sterr_type 2 is an unbiased variance
-#' estimator of all orders (sigma_u in Iwashita and Klar (2024)).
 #' @param CFit logical indicating whether Cross-Fitting should be done in
 #' the debiased estimators (no inferential guarantee can be given yet if FALSE)
 #' @param IOp_rel logical indicating whether relative IOp should be computed
@@ -36,10 +30,7 @@
 #' should be computed. This can be useful for computing partial effects later.
 #' @param weights survey weights adding up to 1
 #' @param rf.cf.ntree how many trees should be grown when using RF or CIF
-#' @param rf.depth how deep should trees be grown in RF (NULL is full depth,
-#' NULL in ranger)
-#' @param cf.depth how deep should trees be grown in CIF (Inf is full depth,
-#' as in partykit)
+#' @param rf.depth how deep should trees be grown in RF (NULL is default from ranger)
 #' @param polynomial.Lasso degree of polynomial to be fitted when using Lasso.
 #' 1 just fits the input X. 2 squares all variables and adds
 #' all pairwise interactions. 3 squares and cubes all variables and adds all
@@ -98,42 +89,38 @@
 #' Statistica Neerlandica, 78(2), 264-280.
 #'
 #' @export
-IOp_new <- function(Y,
-                X,
-                est_method = c("Plugin","Debiased"),
-                ineq = c("Gini", "MLD",c("Gini", "MLD")),
-                ML = c("Lasso","Ridge","RF","CIF","XGB","CB","Torch",
-                      "OLSensemble", "SL"),
-                OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
-                SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
-                ensemblefolds = 5,
-                sterr = TRUE,
-                sterr_type = 1,
-                CFit = TRUE,
-                IOp_rel = FALSE,
-                fitted_values = FALSE,
-                weights = NULL,
-                rf.cf.ntree = 500,
-                rf.depth = NULL,
-                cf.depth = Inf,
-                polynomial.Lasso = 1,
-                polynomial.Ridge = 1,
-                xgb.nrounds = 200,
-                xgb.max.depth = 6,
-                cb.iterations = 1000,
-                cb.depth = 6,
-                torch.epochs = 50,
-                torch.hidden_units = c(64, 32),
-                torch.lr = 0.01,
-                torch.dropout = 0.2,
-                mtry = max(floor(ncol(X)/3), 1),
-                FVs0 = NULL,
-                extFVs = NULL){
+IOp_new2 <- function(Y,
+                    X,
+                    est_method = c("Plugin","Debiased"),
+                    ML = c("Lasso","Ridge","RF","CIF","XGB","CB","Torch",
+                           "OLSensemble", "SL"),
+                    OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
+                    SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
+                    ensemblefolds = 5,
+                    sterr = TRUE,
+                    CFit = TRUE,
+                    IOp_rel = FALSE,
+                    fitted_values = FALSE,
+                    weights = NULL,
+                    rf.cf.ntree = 500,
+                    rf.depth = NULL,
+                    polynomial.Lasso = 1,
+                    polynomial.Ridge = 1,
+                    xgb.nrounds = 200,
+                    xgb.max.depth = 6,
+                    cb.iterations = 1000,
+                    cb.depth = 6,
+                    torch.epochs = 50,
+                    torch.hidden_units = c(64, 32),
+                    torch.lr = 0.01,
+                    torch.dropout = 0.2,
+                    mtry = max(floor(ncol(X)/3), 1),
+                    FVs0 = NULL,
+                    extFVs = NULL){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
   if (est_method == "Plugin"){
-    io <- IOPI(Y,
+    io <- IOPI_new2(Y,
                X,
-               ineq = ineq,
                ML = ML,
                OLSensemble = OLSensemble,
                SL.library = SL.library,
@@ -144,7 +131,6 @@ IOp_new <- function(Y,
                weights = weights,
                rf.cf.ntree = rf.cf.ntree,
                rf.depth = rf.depth,
-               cf.depth = cf.depth,
                polynomial.Lasso = polynomial.Lasso,
                polynomial.Ridge = polynomial.Ridge,
                mtry = mtry,
@@ -159,34 +145,31 @@ IOp_new <- function(Y,
                extFVs = extFVs)
   }
   else if (est_method == "Debiased"){
-    io <- IOD_new(Y,
-              X,
-              CFit = CFit,
-              ineq = ineq,
-              ML = ML,
-              OLSensemble = OLSensemble,
-              SL.library = SL.library,
-              ensemblefolds = ensemblefolds,
-              sterr = sterr,
-              sterr_type = sterr_type,
-              IOp_rel = IOp_rel,
-              fitted_values = fitted_values,
-              weights = weights,
-              rf.cf.ntree = rf.cf.ntree,
-              rf.depth = rf.depth,
-              cf.depth = cf.depth,
-              polynomial.Lasso = polynomial.Lasso,
-              polynomial.Ridge = polynomial.Ridge,
-              mtry = mtry,
-              xgb.nrounds = xgb.nrounds,
-              xgb.max.depth = xgb.max.depth,
-              cb.iterations = cb.iterations,
-              cb.depth = cb.depth,
-              torch.epochs = torch.epochs,
-              torch.hidden_units = torch.hidden_units,
-              torch.lr = torch.lr,
-              torch.dropout = torch.dropout,
-              FVs0 = FVs0,
-              extFVs = extFVs)
+    io <- IOD_new2(Y,
+                  X,
+                  CFit = CFit,
+                  ML = ML,
+                  OLSensemble = OLSensemble,
+                  SL.library = SL.library,
+                  ensemblefolds = ensemblefolds,
+                  sterr = sterr,
+                  IOp_rel = IOp_rel,
+                  fitted_values = fitted_values,
+                  weights = weights,
+                  rf.cf.ntree = rf.cf.ntree,
+                  rf.depth = rf.depth,
+                  polynomial.Lasso = polynomial.Lasso,
+                  polynomial.Ridge = polynomial.Ridge,
+                  mtry = mtry,
+                  xgb.nrounds = xgb.nrounds,
+                  xgb.max.depth = xgb.max.depth,
+                  cb.iterations = cb.iterations,
+                  cb.depth = cb.depth,
+                  torch.epochs = torch.epochs,
+                  torch.hidden_units = torch.hidden_units,
+                  torch.lr = torch.lr,
+                  torch.dropout = torch.dropout,
+                  FVs0 = FVs0,
+                  extFVs = extFVs)
   }
 }

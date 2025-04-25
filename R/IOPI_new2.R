@@ -1,6 +1,5 @@
 IOPI <- function(Y,
                  X,
-                 ineq = c("Gini", "MLD",c("Gini","MLD")),
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
                         "OLSensemble","SL"),
                  OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
@@ -12,7 +11,6 @@ IOPI <- function(Y,
                  weights = NULL,
                  rf.cf.ntree = 500,
                  rf.depth = NULL,
-                 cf.depth = Inf,
                  mtry = max(floor(ncol(X)/3), 1),
                  polynomial.Lasso = 1,
                  polynomial.Ridge = 1,
@@ -28,19 +26,17 @@ IOPI <- function(Y,
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
-  iopi <- mliop(X,
+  iopi <- mliop_new2(X,
                 Y,
                 ML = ML,
                 OLSensemble = OLSensemble,
                 SL.library = SL.library,
                 ensemblefolds = ensemblefolds,
-                ineq = ineq,
                 IOp_rel = IOp_rel,
                 fitted_values = fitted_values,
                 weights = weights,
                 rf.cf.ntree = rf.cf.ntree,
                 rf.depth = rf.depth,
-                cf.depth = cf.depth,
                 mtry = mtry,
                 polynomial.Lasso = polynomial.Lasso,
                 polynomial.Ridge = polynomial.Ridge,
@@ -53,14 +49,18 @@ IOPI <- function(Y,
                 torch.lr = torch.lr,
                 torch.dropout = torch.dropout,
                 extFVs = extFVs)
-    #Standard errors
+  #Standard errors
   if(sterr == TRUE){
     if (fitted_values != TRUE){
       stop("For se with plug in set FVs = TRUE")
     }
-      FVs <- iopi$FVs
-      # se <- sepi(Y,FVs,iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
-      se = se_deb(Y, FVs, as.matrix(iopi$IOp)[1,1], ineq = ineq, weights = weights)
+    FVs <- iopi$FVs
+    n = length(Y)
+    alpha <- numeric(n)  # Preallocate memory
+    for (u in 1:n) {
+      alpha[u] <- (1 / (n-1)) * sum((FVs[u] > FVs[-u]) - (FVs[u] < FVs[-u]))
+    }
+    se = se_deb_new2(Y, FVs, alpha, as.matrix(iopi$IOp)[1,1], weights = weights)
   }
 
   if (fitted_values == TRUE){
@@ -72,31 +72,29 @@ IOPI <- function(Y,
       se_rel = NA
       se = c(se,se_rel)
       warning("se for IOp rel plug in not coded")
-      aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
-      names(se) <- c(rbind(ineq,aux))
+      names(se) <- c(rbind("Gini","Gini_rel"))
       iopi <- c(iopi)
-      names(iopi) <- c(rbind(ineq,aux))
+      names(iopi) <- c(rbind("Gini","Gini_rel"))
     } else{
-      names(se) <- ineq
+      names(se) <- "Gini"
       iopi <- c(iopi)
-      names(iopi) <- ineq
+      names(iopi) <- "Gini"
     }
   } else{
     se <- NULL
     if (IOp_rel == TRUE){
-      aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
       iopi <- c(iopi)
-      names(iopi) <- c(rbind(ineq,aux))
+      names(iopi) <- c(rbind("Gini","Gini_rel"))
     } else{
       iopi <- c(iopi)
-      names(iopi) <- ineq
+      names(iopi) <- "Gini"
     }
   }
   if (IOp_rel == TRUE){
-    IOp_res <- rbind(iopi[ineq],se[ineq])
-    IOp_rel_res <- rbind(iopi[paste(ineq,"rel",sep = "_")],
-                         se[paste(ineq,"rel",sep = "_")])
-    colnames(IOp_rel_res) <- ineq
+    IOp_res <- rbind(iopi["Gini"],se["Gini"])
+    IOp_rel_res <- rbind(iopi[paste("Gini","rel",sep = "_")],
+                         se[paste("Gini","rel",sep = "_")])
+    colnames(IOp_rel_res) <- "Gini"
     if (sterr == TRUE){
       rownames(IOp_res) <- c("IOp", "se")
       rownames(IOp_rel_res) <- c("IOp_rel", "se")
@@ -110,7 +108,7 @@ IOPI <- function(Y,
     else{return(list(IOp = IOp_res, IOp_rel = IOp_rel_res))}
   }
   else {
-    IOp_res <- rbind(iopi[ineq],se[ineq])
+    IOp_res <- rbind(iopi["Gini"],se["Gini"])
     if (sterr == TRUE){
       rownames(IOp_res) <- c("IOp", "se")
     } else{

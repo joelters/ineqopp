@@ -115,6 +115,41 @@ io_deb <- function(Y, FVs, ineq = c("Gini", "MLD"), weights = NULL){
   }
 }
 
+io_deb_new2 <- function(Y, FVs, alpha, weights = NULL){
+  if (is.null(weights)){
+    n = length(Y)
+    n1 <- n - 1
+    # Create index matrices
+    idx1 <- rep(1:n1, times = n1:1)  # Repeats each index for the upper triangle
+    idx2 <- unlist(lapply(2:n, function(x) x:n))  # Creates corresponding paired indices
+    # Compute vectorized operations
+    diff_fvs <- abs(fvs[idx1] - fvs[idx2])
+    diff_alpha <- alpha[idx1] - alpha[idx2]
+    diff_Y <- Y[idx1] - Y[idx2]
+    iop <- tapply(diff_fvs + diff_alpha * (diff_Y - fvs[idx1] + fvs[idx2]), idx1, sum)
+    iop = (2/(n*(n-1)))*sum(iop)
+    iop = iop/(2*mean(Y))
+    return(iop = iop)
+  }
+  else{
+    n = length(Y)
+    n1 <- n - 1
+    # Create index matrices
+    idx1 <- rep(1:n1, times = n1:1)  # Repeats each index for the upper triangle
+    idx2 <- unlist(lapply(2:n, function(x) x:n))  # Creates corresponding paired indices
+    # Compute vectorized operations
+    diff_fvs <- abs(fvs[idx1] - fvs[idx2])
+    diff_alpha <- alpha[idx1] - alpha[idx2]
+    diff_Y <- Y[idx1] - Y[idx2]
+    wwww = weights[idx1]*weights[idx2]
+    iop <- tapply(wwww*(diff_fvs + diff_alpha * (diff_Y - fvs[idx1] + fvs[idx2])), idx1, sum)
+    WW = tapply(wwww, idx1, sum)
+    iop = (2/(n*(n-1)))*sum(iop)
+    iop = iop/(WW*2*weighted.mean(Y,wt))
+    return(iop = iop)
+  }
+}
+
 se_deb2 <- function(Y, FVs, iop, weights = NULL){
   n <- length(Y)
   if (is.null(weights)){
@@ -200,6 +235,44 @@ se_deb <- function(Y, FVs, iop, ineq = c("Gini", "MLD"), weights = NULL){
     se <- sqrt(V/nn)
     return(se)
   }
+}
+
+se_deb_new2 <- function(Y, FVs, alpha, iop, weights = NULL){
+    n <- length(Y)
+    if(is.null(weights)){
+      aux <- sapply(1:n, function(u){
+        sum(iop * (Y[u] + Y[-u]) - abs(fvs[u] - fvs[-u]) -
+              (alpha[u] - alpha[-u]) * (Y[u] - Y[-u] - fvs[u] + fvs[-u])) / (n-1)
+      })
+      S <- var(aux)
+      B <- 2 * mean(Y)
+      V <- 4 * S / (B^2)
+      se <- sqrt(V / n)
+      return(se)
+    }
+    else{
+      aux <- lapply(1:n, function(u){
+        jt <-  sum(iop * (Y[u] + Y[-u]) - abs(fvs[u] - fvs[-u]) -
+                     (alpha[u] - alpha[-u]) * (Y[u] - Y[-u] - fvs[u] + fvs[-u])) / (n-1)
+        if (u!=n){
+          u1 <- u + 1
+          WW <- sum(weights[u]*weights[u1:n])
+        }
+        else{
+          WW <- 0
+        }
+        data.frame(S = jt, WW = WW)
+      })
+      aux <- do.call(rbind, aux)
+      S <- sum((1/n)*aux$S^2)
+      WW <- sum(aux$WW)
+      vnum <- 4*S
+      wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+      vnum = vnum*sum(wt2^2)
+      vden <- (2*weighted.mean(Y,weights))^2
+      V <- vnum/vden
+      return(sqrt(V))
+    }
 }
 
 se_deb_nlls <- function(Y, FVs, alpha, iop, weights = NULL){
@@ -430,6 +503,53 @@ se_rel <- function(Y,FVs,iodeb, ineq = c("Gini", "MLD"), IY, weights = NULL){
   }
 }
 
+se_rel_new2 <- function(Y,FVs,alpha,iodeb, IY, weights = NULL){
+  n <- length(Y)
+  S11 <- 0
+  S22 <- 0
+  S12 <- 0
+  S <- 0
+  if (is.null(weights)){
+    SS <- lapply(1:n, function(u){
+      S11aux <-   sum(iodeb * (Y[u] + Y[-u]) - abs(fvs[u] - fvs[-u]) -
+                        (alpha[u] - alpha[-u]) * (Y[u] - Y[-u] - fvs[u] + fvs[-u])) / (n-1)
+      S22aux <- sum((1/(n-1))*(IY*(Y[u] + Y[-u]) - abs(Y[u] - Y[-u])))
+      data.frame(S11aux = S11aux, S22aux = S22aux)
+    })
+    SS <- do.call(rbind,SS)
+    S11 <- sum((1/n)*SS$S11aux^2)
+    S22 <- sum((1/n)*SS$S22aux^2)
+    S12 <- sum((1/n)*SS$S11aux*SS$S22aux)
+    V <- (1/(mean(Y)^2))*((S11/(IY^2)) + ((iodeb^2)/(IY^4))*S22 - 2*((iodeb)/(IY^3))*S12)
+    se <- sqrt(V/n)
+  }
+  else{
+    SS <- lapply(1:n, function(u){
+      S11aux <- sum(iodeb * (Y[u] + Y[-u]) - abs(fvs[u] - fvs[-u]) -
+                      (alpha[u] - alpha[-u]) * (Y[u] - Y[-u] - fvs[u] + fvs[-u])) / (n-1)
+      S22aux <- sum((1/(n-1))*(IY*(Y[u] + Y[-u]) - abs(Y[u] - Y[-u])))
+      if (u!=n){
+        u1 <- u + 1
+        WWaux <- sum(weights[u]*weights[u1:n])
+      }
+      else{
+        WWaux <- 0
+      }
+      data.frame(S11aux = S11aux, S22aux = S22aux, WWaux = WWaux)
+    })
+    SS <- do.call(rbind,SS)
+    S11 <- sum((1/n)*SS$S11aux^2)
+    S22 <- sum((1/n)*SS$S22aux^2)
+    S12 <- sum((1/n)*SS$S11aux*SS$S22aux)
+    WW <- sum(SS$WWaux)
+    B = weighted.mean(Y,weights)
+    wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+    V <- (1/(B^2))*((S11/(IY^2)) + ((iodeb^2)/(IY^4))*S22 - 2*((iodeb)/(IY^3))*S12)*sum(wt2^2)
+    se <- sqrt(V)
+  }
+  return(se)
+}
+
 se_rel_nlls <- function(Y,FVs,alpha,iodeb, IY, weights = NULL){
   n <- length(Y)
   S11 <- 0
@@ -519,6 +639,35 @@ iodnumsq <- function(Y1,FVs1,Y2,FVs2, wt1 = NULL, wt2 = NULL, FVs01, FVs02){
     a <- lapply(1:n1, function(u){
       a1 <- sum(wt1[u]*wt2*((FVs1[u] > FVs2) - (FVs2 > FVs1[u]))*
                   (Y1[u] - Y2))
+      a2 <- (((FVs1[u] > FVs2) - (FVs2 > FVs1[u])) !=
+               ((FVs01[u] > FVs02) - (FVs02 > FVs01[u])))
+      list(a1 = a1, a2 = a2)
+    })
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
+  }
+}
+
+iodnumsq_new2 <- function(Y1,FVs1,Y2,FVs2, alpha1, alpha2, wt1 = NULL, wt2 = NULL, FVs01, FVs02){
+  if (is.null(wt1)){
+    n1 <- length(Y1)
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(abs(FVs1[u] - FVs2) - (alpha1[u] - alpha2)*
+                  (Y1[u] - Y2- FVs1[u] + FVs2))
+      a2 <- (((FVs1[u] > FVs2) - (FVs2 > FVs1[u])) !=
+               ((FVs01[u] > FVs02) - (FVs02 > FVs01[u])))
+      list(a1 = a1, a2 = a2)
+    })
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
+  }
+  else{
+    n1 <- length(Y1)
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(wt1[u]*wt2*(abs(FVs1[u] - FVs2) - (alpha1[u] - alpha2)*
+                              (Y1[u] - Y2- FVs1[u] + FVs2)))
       a2 <- (((FVs1[u] > FVs2) - (FVs2 > FVs1[u])) !=
                ((FVs01[u] > FVs02) - (FVs02 > FVs01[u])))
       list(a1 = a1, a2 = a2)
@@ -619,6 +768,37 @@ iodnumtr_new <- function(Y1, Y2, FVs1, FVs2, wt1 = NULL, wt2 = NULL, FVs01, FVs0
     a <- lapply(1:n1, function(u){
       a1 <- sum(wt1[u]*wt2[u:n2]*((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u]))*
             (Y1[u] - Y2[u:n2]))
+      a2 <- (((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u])) !=
+               ((FVs01[u] > FVs02[u:n2]) - (FVs02[u:n2] > FVs01[u])))
+      list(a1 = a1, a2 = a2)
+    })
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
+  }
+}
+
+iodnumtr_new2 <- function(Y1, Y2, FVs1, FVs2, alpha1, alpha2, wt1 = NULL, wt2 = NULL, FVs01, FVs02){
+  if (is.null(wt1)){
+    n1 <- length(Y1)
+    n2 = length(Y2)
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(abs(FVs1[u] - FVs2[u:n2]) - (alpha1[u] - alpha2[u:n2])*
+                  (Y1[u] - Y2[u:n2]- FVs1[u] + FVs2[u:n2]))
+      a2 <- (((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u])) !=
+               ((FVs01[u] > FVs02[u:n2]) - (FVs02[u:n2] > FVs01[u])))
+      list(a1 = a1, a2 = a2)
+    })
+    b1 <- sum(sapply(a, function(x) x$a1))
+    sgns <- unlist(lapply(a, function(x) x$a2))
+    return(list(b1 = b1, sgns = sgns))
+  }
+  else{
+    n1 <- length(Y1)
+    n2 <- length(Y2)
+    a <- lapply(1:n1, function(u){
+      a1 <- sum(wt1[u]*wt2[u:n2]*(abs(FVs1[u] - FVs2[u:n2]) - (alpha1[u] - alpha2[u:n2])*
+                                    (Y1[u] - Y2[u:n2]- FVs1[u] + FVs2[u:n2])))
       a2 <- (((FVs1[u] > FVs2[u:n2]) - (FVs2[u:n2] > FVs1[u])) !=
                ((FVs01[u] > FVs02[u:n2]) - (FVs02[u:n2] > FVs01[u])))
       list(a1 = a1, a2 = a2)
@@ -1113,6 +1293,7 @@ mliop <- function(X,
                   fitted_values = FALSE,
                   rf.cf.ntree = 500,
                   rf.depth = NULL,
+                  cf.depth = Inf,
                   mtry = max(floor(ncol(X)/3), 1),
                   polynomial.Lasso = 1,
                   polynomial.Ridge = 1,
@@ -1138,6 +1319,7 @@ mliop <- function(X,
                    ensemblefolds = ensemblefolds,
                    rf.cf.ntree = rf.cf.ntree,
                    rf.depth = rf.depth,
+                   cf.depth = cf.depth,
                    mtry = mtry,
                    polynomial.Lasso = polynomial.Lasso,
                    polynomial.Ridge = polynomial.Ridge,
@@ -1194,6 +1376,84 @@ mliop <- function(X,
     rownames(res) <- c("IOp","IOp_rel")
   }
   else {names(res) <- ineq}
+  if (fitted_values == TRUE){
+    return(list(IOp = res, FVs = FVs))
+  }
+  else{return(res)}
+}
+
+mliop_new2 <- function(X,
+                  Y,
+                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB","Torch",
+                         "OLSensemble", "SL"),
+                  OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
+                  SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
+                  ensemblefolds = 5,
+                  IOp_rel = FALSE,
+                  fitted_values = FALSE,
+                  rf.cf.ntree = 500,
+                  rf.depth = NULL,
+                  mtry = max(floor(ncol(X)/3), 1),
+                  polynomial.Lasso = 1,
+                  polynomial.Ridge = 1,
+                  xgb.nrounds = 200,
+                  xgb.max.depth = 6,
+                  cb.iterations = 1000,
+                  cb.depth = 6,
+                  torch.epochs = 50,
+                  torch.hidden_units = c(64, 32),
+                  torch.lr = 0.01,
+                  torch.dropout = 0.2,
+                  weights = NULL,
+                  extFVs = NULL){
+  ML = match.arg(ML)
+  # ineq = match.arg(ineq)
+  #Estimate FVs
+  if (is.null(extFVs)){
+    m <- ML::MLest(X,
+                   Y,
+                   ML,
+                   OLSensemble = ensemble,
+                   SL.library = SL.library,
+                   ensemblefolds = ensemblefolds,
+                   rf.cf.ntree = rf.cf.ntree,
+                   rf.depth = rf.depth,
+                   mtry = mtry,
+                   polynomial.Lasso = polynomial.Lasso,
+                   polynomial.Ridge = polynomial.Ridge,
+                   xgb.nrounds = xgb.nrounds,
+                   xgb.max.depth = xgb.max.depth,
+                   cb.iterations = cb.iterations,
+                   cb.depth = cb.depth,
+                   torch.epochs = torch.epochs,
+                   torch.hidden_units = torch.hidden_units,
+                   torch.lr = torch.lr,
+                   torch.dropout = torch.dropout,
+                   FVs = TRUE,
+                   weights = weights)
+    FVs <- m$FVs
+  }
+  if (!is.null(extFVs)){
+    FVs <- extFVs
+  }
+
+  if(sum(FVs <= 0) != 0){
+    warning(paste(sum(FVs <= 0),"FVs were lower or equal than 0 and were
+                    turned into the value 1."))
+  }
+  #Estimate plug in IOp
+  iopi <- unlist(acid::weighted.gini(FVs, weights)[2])
+  if (IOp_rel == TRUE){
+    G <- acid::weighted.gini(Y,weights)
+    G <- as.numeric(G[2])
+    iorel <- iopi/G
+    res <- c(iopi, iorel)
+    rownames(res) <- c("IOp","IOp_rel")
+  }
+  else {
+    res = iopi
+    names(res) <- ineq
+  }
   if (fitted_values == TRUE){
     return(list(IOp = res, FVs = FVs))
   }
