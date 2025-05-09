@@ -1078,58 +1078,9 @@ SP_new <- function(df){
   dfcfi = NULL
   dfcfj = NULL
   for (kk in 1:6){
-    dfcfi[[kk]] = data.frame(df[cf.ilist[[kk]],], cf.ilist[[kk]])
-    dfcfj[[kk]] = data.frame(df[cf.jlist[[kk]],], cf.jlist[[kk]])
+    dfcfi[[kk]] = data.frame(df[cf.ilist[[kk]],], ind = cf.ilist[[kk]])
+    dfcfj[[kk]] = data.frame(df[cf.jlist[[kk]],], ind = cf.jlist[[kk]])
   }
-  # Arrange stuff for plotting CF
-  # blcks = c("I1","I2","I3","I4","I5","I6")
-  # aux = NULL
-  # for (kk in 1:6){
-  #   if (kk %in% c(1,2)){
-  #     ncf1 = length(cf.ilist[[kk]])
-  #     ncf2 = length(cf.jlist[[kk]])
-  #
-  #     pldf = data.frame(ci = rep(NA,ncf1*(ncf2+1)*0.5),
-  #                       cj = rep(NA,ncf1*(ncf2+1)*0.5),
-  #                       Il = rep(NA,ncf1*(ncf2+1)*0.5))
-  #     cnt = 0
-  #     for (ii in 1:ncf1){
-  #       jj1 = ii
-  #       for (jj in jj1:ncf2){
-  #         cnt = cnt + 1
-  #         pldf[cnt,] = c(cf.ilist[[kk]][ii], cf.jlist[[kk]][jj],blcks[kk])
-  #       }
-  #     }
-  #     aux[[kk]] = pldf
-  #   } else{
-  #     ncf1 = length(cf.ilist[[kk]])
-  #     ncf2 = length(cf.jlist[[kk]])
-  #
-  #     pldf = data.frame(ci = rep(NA,ncf1*ncf2),
-  #                       cj = rep(NA,ncf1*ncf2),
-  #                       Il = rep(NA,ncf1*ncf2))
-  #     cnt = 0
-  #     for (ii in 1:ncf1){
-  #       for (jj in 1:ncf2){
-  #         cnt = cnt + 1
-  #         pldf[cnt,] = c(cf.ilist[[kk]][ii], cf.jlist[[kk]][jj],blcks[kk])
-  #       }
-  #     }
-  #     aux[[kk]] = pldf
-  #   }
-  # }
-  # pldf = do.call(rbind,aux)
-  # pldf$ci = as.numeric(pldf$ci)
-  # pldf$cj = as.numeric(pldf$cj)
-  #
-  # ggplot(pldf,aes(ci,cj, colour = Il)) +
-  #   geom_point()
-  # scale_x_discrete(name ="i",
-  #                  limits=factor(1:nn)) +
-  # scale_y_discrete(name ="j",
-  #                  limits=factor(1:nn)) +
-  # geom_abline(intercept = 0, slope = 1)
-
   return(list(dfcfi = dfcfi, dfcfj = dfcfj))
 }
 

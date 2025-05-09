@@ -147,6 +147,7 @@ IOD_new <- function(Y,
       numcf <- 0
       iod_mld <- 0
       res = lapply(1:6, function(u){
+        message("Fold ", u, " of ", 6)
         #Create dataframe with all observations not in I_l
         aux <- dfnotl_new(df,dfcfi,dfcfj,u)
 
@@ -193,6 +194,7 @@ IOD_new <- function(Y,
         X1 <- dplyr::select(dfcfi[[u]][,-c(ncol(dfcfi[[u]]))], -c(Y,wt,FVs0))
         Y1 <- dfcfi[[u]]$Y
         FVs01 <- dfcfi[[u]]$FVs0
+        FVs1_ind = dplyr::select(dfcfi[[u]],c("FVs0","ind"))
         if(!is.null(weights)){
           wt1 <- dfcfi[[u]]$wt
         }
@@ -200,6 +202,7 @@ IOD_new <- function(Y,
 
         Y2 <- dfcfj[[u]]$Y
         FVs02 <- dfcfj[[u]]$FVs0
+        FVs2_ind = dplyr::select(dfcfj[[u]],c("FVs0","ind"))
         if(!is.null(weights)){
           wt2 <- dfcfj[[u]]$wt
         }
@@ -208,9 +211,13 @@ IOD_new <- function(Y,
         FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, polynomial.Lasso = polynomial.Lasso,
                           polynomial.Ridge = polynomial.Ridge,
                           coefs = coefs)
+        FVs1_ind$FVs = FVs1
         FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, polynomial.Lasso = polynomial.Lasso,
                           polynomial.Ridge = polynomial.Ridge,
                           coefs = coefs)
+        FVs2_ind$FVs = FVs2
+        FVsinfold_bind = rbind(FVs1_ind,FVs2_ind)
+        FVsinfold <- FVsinfold_bind[!duplicated(FVsinfold_bind$ind), ]
         FVs1 <- FVs1*(FVs1 > 0) + (FVs1 <= 0)
         FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
         if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
@@ -233,7 +240,8 @@ IOD_new <- function(Y,
           num <- num[[1]]
           RMSE1 = 0
         }
-        return(list(nums = num, RMSE1s = RMSE1, coefs = coefs, sgns = sgns))
+        return(list(nums = num, RMSE1s = RMSE1, coefs = coefs,
+                    sgns = sgns, FVsinfold = FVsinfold))
         })
       resnums = sapply(res, function(t){
         t$nums
@@ -251,6 +259,10 @@ IOD_new <- function(Y,
 
       sgns = lapply(res, function(t){
         t$sgns
+      })
+
+      FVsinfold = lapply(res, function(t){
+        t$FVsinfold
       })
 
       #Compute denominator
@@ -369,9 +381,12 @@ IOD_new <- function(Y,
           colnames(jtrel) <- "Gini"
         }
         if (fitted_values == TRUE){
-          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, FVs = FVres, coefs = coefs, sgns = sgns))
+          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel,
+                      FVs = FVres, coefs = coefs,
+                      sgns = sgns, FVsinfold = FVsinfold))
         } else{
-          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, coefs = coefs,sgns = sgns))
+          return(list(IOp = jt, RMSE1 = RMSE1, IOp_rel = jtrel, coefs = coefs,
+                      sgns = sgns, FVsinfold = FVsinfold))
         }
       }
     }
