@@ -2,7 +2,7 @@ IOPI <- function(Y,
                  X,
                  ineq = c("Gini", "MLD",c("Gini","MLD")),
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
-                        "OLSensemble","SL"),
+                        "NLLS_exp", "OLSensemble","SL"),
                  OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                  ensemblefolds = 2,
                  SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
@@ -24,6 +24,8 @@ IOPI <- function(Y,
                  torch.hidden_units = c(64, 32),
                  torch.lr = 0.01,
                  torch.dropout = 0.2,
+                 polynomial.NLLS_exp = 1,
+                 start_nlls = NULL,
                  extFVs = NULL){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
@@ -52,6 +54,8 @@ IOPI <- function(Y,
                 torch.hidden_units = torch.hidden_units,
                 torch.lr = torch.lr,
                 torch.dropout = torch.dropout,
+                polynomial.NLLS_exp = polynomial.NLLS_exp,
+                start_nlls = start_nlls,
                 extFVs = extFVs)
     #Standard errors
   if(sterr == TRUE){

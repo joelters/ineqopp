@@ -4,7 +4,7 @@ IOD_new <- function(Y,
                 npart = 5,
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB", "Torch",
-                       "OLSensemble", "SL"),
+                      "NLLS_exp", "OLSensemble", "SL"),
                 OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                 SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
                 ensemblefolds = 5,
@@ -27,6 +27,8 @@ IOD_new <- function(Y,
                 torch.hidden_units = c(64, 32),
                 torch.lr = 0.01,
                 torch.dropout = 0.2,
+                polynomial.NLLS_exp = 1,
+                start_nlls = NULL,
                 FVs0 = NULL,
                 extFVs = NULL){
   if(!is.null(weights) & class(weights) != "numeric"){
@@ -58,6 +60,7 @@ IOD_new <- function(Y,
                    torch.hidden_units = torch.hidden_units,
                    torch.lr = torch.lr,
                    torch.dropout = torch.dropout,
+                   polynomial.NLLS_exp = polynomial.NLLS_exp,
                    FVs = TRUE,
                    weights = weights)
     model <- m$model
@@ -172,6 +175,8 @@ IOD_new <- function(Y,
                        torch.hidden_units = torch.hidden_units,
                        torch.lr = torch.lr,
                        torch.dropout = torch.dropout,
+                       polynomial.NLLS_exp = polynomial.NLLS_exp,
+                       start_nlls = start_nlls,
                        FVs = FALSE,
                        weights = aux$wt)
         if (ML != "OLSensemble"){
@@ -210,10 +215,12 @@ IOD_new <- function(Y,
         X2 <- dplyr::select(dfcfj[[u]][,-c(ncol(dfcfj[[u]]))], -c(Y,wt,FVs0))
         FVs1 <- ML::FVest(model,X,Y,X1,Y1,ML, polynomial.Lasso = polynomial.Lasso,
                           polynomial.Ridge = polynomial.Ridge,
+                          polynomial.NLLS_exp = polynomial.NLLS_exp,
                           coefs = coefs)
         FVs1_ind$FVs = FVs1
         FVs2 <- ML::FVest(model,X,Y,X2,Y2,ML, polynomial.Lasso = polynomial.Lasso,
                           polynomial.Ridge = polynomial.Ridge,
+                          polynomial.NLLS_exp = polynomial.NLLS_exp,
                           coefs = coefs)
         FVs2_ind$FVs = FVs2
         FVsinfold_bind = rbind(FVs1_ind,FVs2_ind)
@@ -300,6 +307,8 @@ IOD_new <- function(Y,
                          torch.hidden_units = torch.hidden_units,
                          torch.lr = torch.lr,
                          torch.dropout = torch.dropout,
+                         polynomial.NLLS_exp = polynomial.NLLS_exp,
+                         start_nlls = start_nlls,
                          FVs = TRUE,
                          weights = weights)
 

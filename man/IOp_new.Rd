@@ -9,7 +9,8 @@ IOp_new(
   X,
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "OLSensemble", "SL"),
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "NLLS_exp", "OLSensemble",
+    "SL"),
   OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
   SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
   ensemblefolds = 5,
@@ -33,6 +34,8 @@ IOp_new(
   torch.lr = 0.01,
   torch.dropout = 0.2,
   mtry = max(floor(ncol(X)/3), 1),
+  polynomial.NLLS_exp = 1,
+  start_nlls = NULL,
   FVs0 = NULL,
   extFVs = NULL
 )
@@ -113,6 +116,11 @@ optimizer when training the Torch neural network.}
 rate for regularization in the Torch neural network.}
 
 \item{mtry}{number of variables to consider at each split in RF or CIF}
+
+\item{polynomial.NLLS_ext}{degree of polynomial to be fitted when using
+NLLS_exp, see polynomial.Lasso for more info.
+@param start_nlls List with the starting values of the parameters.
+Default is log(mean(Y)) for the intercept and zero for all the rest.}
 }
 \value{
 list containing IOp estimates, RMSE of the first stage (for Debiased

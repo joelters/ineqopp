@@ -59,6 +59,10 @@
 #' optimizer when training the Torch neural network.
 #' @param torch.dropout a numeric value between 0 and 1 specifying the dropout
 #' rate for regularization in the Torch neural network.
+#' @param polynomial.NLLS_ext degree of polynomial to be fitted when using
+#'  NLLS_exp, see polynomial.Lasso for more info.
+#'  @param start_nlls List with the starting values of the parameters.
+#'  Default is log(mean(Y)) for the intercept and zero for all the rest.
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' estimates), relative IOp (if desired) and fitted values (if desired)
 #' @examples
@@ -103,7 +107,7 @@ IOp_new <- function(Y,
                 est_method = c("Plugin","Debiased"),
                 ineq = c("Gini", "MLD",c("Gini", "MLD")),
                 ML = c("Lasso","Ridge","RF","CIF","XGB","CB","Torch",
-                      "OLSensemble", "SL"),
+                      "NLLS_exp", "OLSensemble", "SL"),
                 OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
                 SL.library = c("SL.ranger", "SL.xgboost","SL.glmnet"),
                 ensemblefolds = 5,
@@ -127,6 +131,8 @@ IOp_new <- function(Y,
                 torch.lr = 0.01,
                 torch.dropout = 0.2,
                 mtry = max(floor(ncol(X)/3), 1),
+                polynomial.NLLS_exp = 1,
+                start_nlls = NULL,
                 FVs0 = NULL,
                 extFVs = NULL){
   if (sum(Y<0) != 0){stop("There are negative values for Y.")}
@@ -156,6 +162,8 @@ IOp_new <- function(Y,
                torch.hidden_units = torch.hidden_units,
                torch.lr = torch.lr,
                torch.dropout = torch.dropout,
+               polynomial.NLLS_exp = polynomial.NLLS_exp,
+               start_nlls = start_nlls,
                extFVs = extFVs)
   }
   else if (est_method == "Debiased"){
@@ -177,6 +185,8 @@ IOp_new <- function(Y,
               cf.depth = cf.depth,
               polynomial.Lasso = polynomial.Lasso,
               polynomial.Ridge = polynomial.Ridge,
+              polynomial.NLLS_exp = polynomial.NLLS_exp,
+              start_nlls = start_nlls,
               mtry = mtry,
               xgb.nrounds = xgb.nrounds,
               xgb.max.depth = xgb.max.depth,
