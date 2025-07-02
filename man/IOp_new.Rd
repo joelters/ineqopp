@@ -9,8 +9,8 @@ IOp_new(
   X,
   est_method = c("Plugin", "Debiased"),
   ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "NLLS_exp", "OLSensemble",
-    "SL"),
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "loglin", "NLLS_exp",
+    "OLSensemble", "SL"),
   OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
   SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
   ensemblefolds = 5,
@@ -25,6 +25,7 @@ IOp_new(
   cf.depth = Inf,
   polynomial.Lasso = 1,
   polynomial.Ridge = 1,
+  polynomial.loglin = 1,
   xgb.nrounds = 200,
   xgb.max.depth = 6,
   cb.iterations = 1000,
@@ -93,6 +94,9 @@ all pairwise interactions. 3 squares and cubes all variables and adds all
 pairwise and threewise interactions...}
 
 \item{polynomial.Ridge}{degree of polynomial to be fitted when using Ridge,
+see polynomial.Lasso for more info.}
+
+\item{polynomial.loglin}{degree of polynomial to be fitted when using loglin,
 see polynomial.Lasso for more info.}
 
 \item{xgb.nrounds}{s an integer specifying how many rounds to use in XGB}
