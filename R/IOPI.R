@@ -66,7 +66,10 @@ IOPI <- function(Y,
     }
       FVs <- iopi$FVs
       # se <- sepi(Y,FVs,iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
-      se = se_deb(Y, FVs, as.matrix(iopi$IOp)[1,1], ineq = ineq, weights = weights)
+      # se = se_deb(Y, FVs, as.matrix(iopi$IOp)[1,1], ineq = ineq, weights = weights)
+      se = se_PI(Y, FVs, as.matrix(iopi$IOp)[1,1], weights = weights)
+      se_naive = se$se_naive
+      se = se$se
   }
 
   if (fitted_values == TRUE){
@@ -76,14 +79,16 @@ IOPI <- function(Y,
   if (sterr == TRUE){
     if (IOp_rel == TRUE){
       se_rel = NA
+      se_rel_naive = NA
       se = c(se,se_rel)
+      se_naive = c(se_naive, se_rel_naive)
       warning("se for IOp rel plug in not coded")
       aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
       names(se) <- c(rbind(ineq,aux))
       iopi <- c(iopi)
       names(iopi) <- c(rbind(ineq,aux))
     } else{
-      names(se) <- ineq
+      # names(se) <- ineq
       iopi <- c(iopi)
       names(iopi) <- ineq
     }
@@ -99,13 +104,13 @@ IOPI <- function(Y,
     }
   }
   if (IOp_rel == TRUE){
-    IOp_res <- rbind(iopi[ineq],se[ineq])
+    IOp_res <- rbind(iopi,se,se_naive)
     IOp_rel_res <- rbind(iopi[paste(ineq,"rel",sep = "_")],
-                         se[paste(ineq,"rel",sep = "_")])
+                         NA,NA)
     colnames(IOp_rel_res) <- ineq
     if (sterr == TRUE){
-      rownames(IOp_res) <- c("IOp", "se")
-      rownames(IOp_rel_res) <- c("IOp_rel", "se")
+      rownames(IOp_res) <- c("IOp", "se", "se_naive")
+      rownames(IOp_rel_res) <- c("IOp_rel", "se", "se_naive")
     } else{
       rownames(IOp_res) <- c("IOp")
       rownames(IOp_rel_res) <- c("IOp_rel")
@@ -116,9 +121,9 @@ IOPI <- function(Y,
     else{return(list(IOp = IOp_res, IOp_rel = IOp_rel_res))}
   }
   else {
-    IOp_res <- rbind(iopi[ineq],se[ineq])
+    IOp_res <- rbind(iopi[ineq],se,se_naive)
     if (sterr == TRUE){
-      rownames(IOp_res) <- c("IOp", "se")
+      rownames(IOp_res) <- c("IOp", "se","se_naive")
     } else{
       rownames(IOp_res) <- c("IOp")
     }

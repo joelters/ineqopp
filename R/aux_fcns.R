@@ -1415,3 +1415,66 @@ mliop_new2 <- function(X,
   }
   else{return(res)}
 }
+
+
+se_PI <- function(Y,FVs,iop, weights = NULL){
+  if (is.null(weights)){
+    n <- length(FVs)
+    S <- sapply(1:n, function(u){
+      a <- sum((1/(n-1))*(iop*(Y[u] + Y[-u]) -
+                            ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
+                            (Y[u] - Y[-u])))
+      b <- sum((1/(n-1))*(iop*(FVs[u] + FVs[-u]) - abs(FVs[u] - FVs[-u])))
+      return(c(a,b))
+    })
+    S_naive = S[2,]
+    S_naive <- sum(S_naive^2)
+    B = 2*mean(Y)
+    S_naive = (4/n)*S_naive
+    V = (1/B^2)*S_naive
+    se_naive = sqrt(V/n)
+
+    S = S[1,]
+    S <- sum(S^2)
+    B = 2*mean(Y)
+    S = (4/n)*S
+    V = (1/B^2)*S
+    se = sqrt(V/n)
+    return(data.frame(se = se, se_naive = se_naive))
+  }
+  else{
+    n <- length(FVs)
+    SS <- lapply(1:n, function(u){
+      a1 = sum((1/(n-1))*(iop*(Y[u] + Y[-u]) -
+                            ((FVs[u] > FVs[-u]) - (FVs[-u] > FVs[u]))*
+                            (Y[u] - Y[-u])))
+      a2 <- sum((1/(n-1))*(iop*(FVs[u] + FVs[-u]) - abs(FVs[u] - FVs[-u])))
+      u1 <- u + 1
+      if (u != n){
+        b <-  sum(weights[u]*weights[u1:n])
+      }
+      else{
+        b <- 0
+      }
+      data.frame(S = a1, S_naive = a2, WW = b)
+    })
+    SS <- do.call(rbind,SS)
+
+    S <- sum((1/n)*SS$S^2)
+    WW <- sum(SS$WW)
+    wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+    S = 4*S*sum(wt2^2)
+    B = 2*weighted.mean(Y,weights)
+    V = (1/B^2)*S
+    se = sqrt(V)
+
+    S <- sum((1/n)*SS$S_naive^2)
+    WW <- sum(SS$WW)
+    wt2 <- (weights*(rep(sum(weights),length(Y)) - weights))/(2*WW)
+    S = 4*S*sum(wt2^2)
+    B = 2*weighted.mean(Y,weights)
+    V = (1/B^2)*S
+    se = sqrt(V)
+    return(data.frame(se = se, se_naive = se_naive))
+  }
+}
