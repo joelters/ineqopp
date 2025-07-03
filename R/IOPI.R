@@ -94,6 +94,7 @@ IOPI <- function(Y,
     }
   } else{
     se <- NULL
+    se_naive = NULL
     if (IOp_rel == TRUE){
       aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
       iopi <- c(iopi)
