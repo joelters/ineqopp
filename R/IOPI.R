@@ -62,7 +62,7 @@ IOPI <- function(Y,
     #Standard errors
   if(sterr == TRUE){
     if (fitted_values != TRUE){
-      stop("For se with plug in set FVs = TRUE")
+      stop("For se with plug in set fitted_values = TRUE")
     }
       FVs <- iopi$FVs
       # se <- sepi(Y,FVs,iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
