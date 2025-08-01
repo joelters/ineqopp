@@ -1,6 +1,5 @@
 IOPI <- function(Y,
                  X,
-                 ineq = c("Gini", "MLD",c("Gini","MLD")),
                  ML = c("Lasso","Ridge","RF","CIF","XGB","CB",
                         "loglin", "NLLS_exp", "OLSensemble","SL"),
                  OLSensemble = c("Lasso","Ridge","RF","CIF","XGB","CB"),
@@ -31,15 +30,14 @@ IOPI <- function(Y,
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
-  iopi <- mliop(X,
+  iopi <- mliop_pi(X,
                 Y,
                 ML = ML,
                 OLSensemble = OLSensemble,
                 SL.library = SL.library,
                 ensemblefolds = ensemblefolds,
-                ineq = ineq,
                 IOp_rel = IOp_rel,
-                fitted_values = fitted_values,
+                fitted_values = TRUE,
                 weights = weights,
                 rf.cf.ntree = rf.cf.ntree,
                 rf.depth = rf.depth,
@@ -61,78 +59,30 @@ IOPI <- function(Y,
                 extFVs = extFVs)
     #Standard errors
   if(sterr == TRUE){
-    if (fitted_values != TRUE){
-      stop("For se with plug in set fitted_values = TRUE")
-    }
-      FVs <- iopi$FVs
-      # se <- sepi(Y,FVs,iopi$IOp["IOp","Gini"], ineq = ineq, weights = weights)
-      # se = se_deb(Y, FVs, as.matrix(iopi$IOp)[1,1], ineq = ineq, weights = weights)
-      se = se_PI(Y, FVs, as.matrix(iopi$IOp)[1,1], weights = weights)
-      se_naive = se$se_naive
-      se = se$se
-  }
-
-  if (fitted_values == TRUE){
+    warning("Neither se nor se_naive are valid standard errors in general settings
+    for the plug-in estimator. se uses the standard error formula of the debiased
+    estimator and se_naive ignores first step estimation. Still neither are
+    generally valid for the plugin estimator so we do not recommend reporting these.")
     FVs <- iopi$FVs
-    iopi <- iopi$IOp
-  }
-  if (sterr == TRUE){
+    rmse1 = sqrt(weighted.mean2(((Y - FVs)^2), weights = weights))
+    iopi = iopi$IOp
+    se = se_PI(Y, FVs, iopi["IOp"] , weights = weights)
+    se_naive = se$se_naive
+    se = se$se
     if (IOp_rel == TRUE){
-      se_rel = NA
-      se_rel_naive = NA
-      se = c(se,se_rel)
-      se_naive = c(se_naive, se_rel_naive)
-      warning("se for IOp rel plug in not coded")
-      aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
-      names(se) <- c(rbind(ineq,aux))
-      iopi <- c(iopi)
-      names(iopi) <- c(rbind(ineq,aux))
+      warning("se for IOp rel plug in not coded, NA instead")
+      se = c(se,NA)
+      se_naive = c(se_naive, NA)
+      IOp_res = rbind(iopi,se,se_naive)
+      return(list(IOp = IOp_res, RMSE1 = rmse1, FVs = FVs))
     } else{
-      # names(se) <- ineq
-      iopi <- c(iopi)
-      names(iopi) <- ineq
+      IOp_res = rbind(iopi,se)
+      return(list(IOp = IOp_res,RMSE1 = rmse1, FVs = FVs))
     }
   } else{
-    se <- NULL
-    se_naive = NULL
-    if (IOp_rel == TRUE){
-      aux <- sapply(ineq,function(u){paste(u,"rel",sep = "_")})
-      iopi <- c(iopi)
-      names(iopi) <- c(rbind(ineq,aux))
-    } else{
-      iopi <- c(iopi)
-      names(iopi) <- ineq
-    }
-  }
-  if (IOp_rel == TRUE){
-    IOp_res <- rbind(iopi,se,se_naive)
-    IOp_rel_res <- rbind(iopi[paste(ineq,"rel",sep = "_")],
-                         NA,NA)
-    colnames(IOp_rel_res) <- ineq
-    if (sterr == TRUE){
-      rownames(IOp_res) <- c("IOp", "se", "se_naive")
-      rownames(IOp_rel_res) <- c("IOp_rel", "se", "se_naive")
-    } else{
-      rownames(IOp_res) <- c("IOp")
-      rownames(IOp_rel_res) <- c("IOp_rel")
-    }
-    if (fitted_values == TRUE){
-      return(list(IOp = IOp_res, IOp_rel = IOp_rel_res, FVs = FVs))
-    }
-    else{return(list(IOp = IOp_res, IOp_rel = IOp_rel_res))}
-  }
-  else {
-    IOp_res <- rbind(iopi[ineq],se,se_naive)
-    if (sterr == TRUE){
-      rownames(IOp_res) <- c("IOp", "se","se_naive")
-    } else{
-      rownames(IOp_res) <- c("IOp")
-    }
-    IOp_rel_res <- NULL
-    if (fitted_values == TRUE){
-      return(list(IOp = IOp_res, IOp_rel = IOp_rel_res, FVs = FVs))
-    }
-    else{return(list(IOp = IOp_res, IOp_rel = IOp_rel_res))}
+    FVs <- iopi$FVs
+    iopi = iopi$IOp
+    return(list(IOp = iopi, RMSE1 = rmse1, FVs = FVs))
   }
 }
 

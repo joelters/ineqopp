@@ -8,14 +8,32 @@ IOpgrouptest(
   Y,
   X,
   FVs,
-  ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "SL"),
-  ensemble = c("SL.Lasso", "SL.Ridge", "SL.RF", "SL.CIF", "SL.XGB", "SL.CB"),
-  K = 5,
-  iop_gini = NULL,
-  iop_mld = NULL,
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "loglin", "NLLS_exp",
+    "OLSensemble", "SL"),
+  iop_full = NULL,
   circs,
-  weights = NULL
+  OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
+  SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
+  ensemble = c("SL.Lasso", "SL.Ridge", "SL.RF", "SL.CIF", "SL.XGB", "SL.CB"),
+  ensemblefolds = 5,
+  weights = NULL,
+  rf.cf.ntree = 500,
+  rf.depth = 5,
+  cf.depth = 5,
+  polynomial.Lasso = 1,
+  polynomial.Ridge = 1,
+  polynomial.loglin = 1,
+  xgb.nrounds = 200,
+  xgb.max.depth = 6,
+  cb.iterations = 1000,
+  cb.depth = 6,
+  torch.epochs = 50,
+  torch.hidden_units = c(64, 32),
+  torch.lr = 0.01,
+  torch.dropout = 0.2,
+  mtry = max(floor(ncol(X)/3), 1),
+  polynomial.NLLS_exp = 1,
+  start_nlls = NULL
 )
 }
 \arguments{
@@ -25,22 +43,15 @@ IOpgrouptest(
 
 \item{FVs}{fitted values taken from running the function IOp first}
 
-\item{ineq}{which inequality index among Gini and MLD should be chosen.
-We can choose to use both.}
-
 \item{ML}{is a string specifying which machine learner to use, usually one uses
 the same ML as the one used in the estimation of IOp}
 
-\item{ensemble}{is a string vector specifying which learners
-should be used in the SuperLearner}
-
-\item{K}{in how many parts should the data be split for cross-fitting}
-
-\item{iop_gini}{an IOp estimate based on the Gini using the full set of circumstances}
-
-\item{iop_mld}{an IOp estimate based on the MLD using the full set of circumstances}
+\item{iop_full}{an IOp estimate based on the Gini using the full set of circumstances}
 
 \item{circs}{vector of circumstances for which we want to perform the group test}
+
+\item{ensemble}{is a string vector specifying which learners
+should be used in the SuperLearner}
 
 \item{weights}{survey weights adding up to 1}
 }
@@ -52,33 +63,27 @@ test results
 circumstances for which it performs a joint test.
 }
 \examples{
-X <- dplyr::select(mad2019,-Y)
-Y <- mad2019$Y
-circs <- c("educM","educF")
-iop <- IOp(Y,
-           X,
-           est_method = "Debiased",
-           CFit = TRUE,
-           ineq = c("Gini","MLD"),
-           plugin_method = c("ML"),
-           ML = "RF",
-           sterr = FALSE,
-           fitted_values = TRUE)
-FVs <- iop$FVs
-iop_gini <- iop$IOp["IOp","Gini"]
-iop_mld <- iop$IOp["IOp","MLD"]
+n <- 3000
+X1 <- rnorm(n)
+X2 <- rnorm(n)
+Y1 <- exp(2 + 0.2*X1 + 0.1*X2 + rnorm(n,0,0.5))
+Y2 <- exp(2 + 0*X1 + 0.1*X2 + rnorm(n,0,0.5))
+X <- data.frame(X1,X2)
+ML = "XGB"
+set.seed(123)
 
-Gtest <- IOpgrouptest(Y,
-                      X,
-                      FVs = FVs,
-                      ineq = c("Gini","MLD"),
-                      ML = "RF",
-                      K = 5,
-                      iop_gini = iop_gini,
-                      iop_mld = iop_mld,
-                      circs = circs)
-Gtest$Gini
-Gtest$MLD
+res <- IOp(Y,X,ML = ML,sterr = TRUE, IOp_rel = TRUE,
+           est_method = "Debiased", fitted_values = TRUE, CFit = TRUE,
+           rf.depth = 5)
+
+FVs <- res$FVs
+iop_pe <- res$IOp[1]
+res$IOp
+res$IOp_rel
+
+IOpgrouptest(Y1,X, FVs, ML = "XGB", iop_full = iop_pe, circs = c("X1"))
+IOpgrouptest(Y2,X, FVs, ML = "XGB", iop_full = iop_pe, circs = c("X1"))
+
 
 }
 \references{

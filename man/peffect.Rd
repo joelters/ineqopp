@@ -9,16 +9,33 @@ peffect(
   X,
   circs,
   FVs,
-  ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "SL"),
-  ensemble = c("SL.Lasso", "SL.Ridge", "SL.RF", "SL.CIF", "SL.XGB", "SL.CB"),
-  K = 5,
-  iop_gini = NULL,
-  iop_mld = NULL,
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "loglin", "NLLS_exp",
+    "OLSensemble", "SL"),
+  OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
+  SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
+  iop_full = NULL,
   pe_rel = FALSE,
   parallel = FALSE,
   group = FALSE,
-  weights = NULL
+  weights = NULL,
+  rf.cf.ntree = 500,
+  rf.depth = 5,
+  cf.depth = 5,
+  polynomial.Lasso = 1,
+  polynomial.Ridge = 1,
+  polynomial.loglin = 1,
+  xgb.nrounds = 200,
+  xgb.max.depth = 6,
+  cb.iterations = 1000,
+  cb.depth = 6,
+  torch.epochs = 50,
+  torch.hidden_units = c(64, 32),
+  torch.lr = 0.01,
+  torch.dropout = 0.2,
+  mtry = max(floor(ncol(X)/3), 1),
+  polynomial.NLLS_exp = 1,
+  start_nlls = NULL,
+  ensemblefolds = 5
 )
 }
 \arguments{
@@ -31,27 +48,72 @@ partial effects.}
 
 \item{FVs}{fitted values taken from running the function IOp first}
 
-\item{ineq}{which inequality index among Gini and MLD should be chosen.
-We can choose to use both.}
+\item{ML}{is a string specifying which machine learner to use (usually the
+same as the one used to estimate full IOp)}
 
-\item{ML}{is a string specifying which machine learner to use, usually one uses
-the same ML as the one used in the estimation of IOp}
+\item{OLSensemble}{is a string vector specifying which learners should be
+used in OLS ensemble method}
 
-\item{ensemble}{is a string vector specifying which learners
-should be used in the SuperLearner}
-
-\item{K}{in how many parts should the data be split for cross-fitting}
-
-\item{iop_gini}{an IOp estimate based on the Gini using the full set of circumstances}
-
-\item{iop_mld}{an IOp estimate based on the MLD using the full set of circumstances}
+\item{SL.library}{is a string vector specifying which learners should be
+used in SuperLearner}
 
 \item{pe_rel}{logical indicating whether relative IOp PEs should be computed}
 
 \item{parallel}{logical indicating whether we want to parallelize the computation
 of the partial effect of each circumstance}
 
-\item{weights}{survey weights adding up to 1}
+\item{weights}{survey weights adding up to 1
+#' @param rf.cf.ntree how many trees should be grown when using RF or CIF}
+
+\item{rf.depth}{how deep should trees be grown in RF (NULL is full depth,
+NULL in ranger)}
+
+\item{cf.depth}{how deep should trees be grown in CIF (Inf is full depth,
+as in partykit)}
+
+\item{polynomial.Lasso}{degree of polynomial to be fitted when using Lasso.
+1 just fits the input X. 2 squares all variables and adds
+all pairwise interactions. 3 squares and cubes all variables and adds all
+pairwise and threewise interactions...}
+
+\item{polynomial.Ridge}{degree of polynomial to be fitted when using Ridge,
+see polynomial.Lasso for more info.}
+
+\item{polynomial.loglin}{degree of polynomial to be fitted when using loglin,
+see polynomial.Lasso for more info.}
+
+\item{xgb.nrounds}{s an integer specifying how many rounds to use in XGB}
+
+\item{xgb.max.depth}{an integer specifying how deep trees should be grown in XGB}
+
+\item{cb.iterations}{an integer specifying how many iterations to use in CB}
+
+\item{cb.depth}{an integer specifying how deep trees should be grown in CB}
+
+\item{torch.epochs}{an integer specifying the number of epochs (full passes through the dataset)
+to use when training the Torch neural network.}
+
+\item{torch.hidden_units}{a numeric vector specifying the number of neurons in
+each hidden layer of the Torch neural network.}
+
+\item{torch.lr}{a numeric value specifying the learning rate to be used for the
+optimizer when training the Torch neural network.}
+
+\item{torch.dropout}{a numeric value between 0 and 1 specifying the dropout
+rate for regularization in the Torch neural network.}
+
+\item{mtry}{number of variables to consider at each split in RF or CIF}
+
+\item{start_nlls}{List with the starting values of the parameters.
+Default is log(mean(Y)) for the intercept and zero for all the rest.}
+
+\item{ensemblefolds}{how many folds to use in crossvalidation for ensemble
+methods (i.e. superlearner or OLSensemble)}
+
+\item{iop}{an IOp estimate based on the Gini using the full set of circumstances}
+
+\item{polynomial.NLLS_ext}{degree of polynomial to be fitted when using
+NLLS_exp, see polynomial.Lasso for more info.}
 }
 \value{
 list containing PEs and relative PEs (if desired) estimates and standard
@@ -61,51 +123,34 @@ errors for each circumstance in circs
 \code{peffect} is a post-estimation function of IOp. By taking an estimate
 of IOp and a vector of circumstance names, it compares IOp with all
 circumstances and without each of the circumstances in the circs input
-vector.
+vector. Only possible with the crossfitted debiased estimator. Also, it is
+advised to use the same ML and tuning parameters as in the IOp estimation
+with all circumstances unless there is a specific reason to do otherwise.
 }
 \examples{
-mad <- mad2019[1:250,]
-X <- dplyr::select(mad,-Y)
-Y <- mad$Y
-circs <- c("educM","educF")
-iop <- IOp(Y,
-           X,
-           est_method = "Debiased",
-           CFit = TRUE,
-           ineq = c("Gini","MLD"),
-           plugin_method = c("ML"),
-           ML = "Lasso",
-           sterr = FALSE,
-           boots = 2,
-           IOp_rel = TRUE,
-           fitted_values = TRUE)
-FVs <- iop$FVs
-iop_gini <- iop$IOp["IOp","Gini"]
-iop_mld <- iop$IOp["IOp","MLD"]
 
-pe1 <- peffect(Y,
-               X,
-               circs,
-               FVs = FVs,
-               ineq = c("Gini","MLD"),
-               ML = "Lasso",
-               K = 5,
-               iop_gini = iop_gini,
-               iop_mld = iop_mld,
-               pe_rel = TRUE,
-               parallel = FALSE)
+n <- 3000
+X1 <- rnorm(n)
+X2 <- rnorm(n)
+Y <- exp(2 + 0.2*X1 + 0.1*X2 + rnorm(n,0,0.5))
+X <- data.frame(X1,X2)
+
+res <- IOp(Y,X,ML = "XGB", est_method = "Debiased",
+fitted_values = TRUE, CFit = TRUE)
+
+FVs <- res$FVs
+iop_pe <- res$IOp[1]
 
 pe2 <- peffect(Y,
-               X,
-               circs,
-               FVs = FVs,
-               ineq = c("Gini","MLD"),
-               ML = "Lasso",
-               K = 5,
-               iop_gini = iop_gini,
-               iop_mld = iop_mld,
-               pe_rel = TRUE,
-               parallel = TRUE)
+X,
+circs = c("X1", "X2"),
+FVs = FVs,
+ML = "XGB",
+iop_full = iop_pe,
+pe_rel = TRUE,
+parallel = TRUE)
+pe2$X1$PE_rel
+pe2$X2$PE_rel
 
 }
 \references{

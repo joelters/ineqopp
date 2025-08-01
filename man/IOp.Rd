@@ -7,16 +7,36 @@
 IOp(
   Y,
   X,
-  est_method = c("Plugin", "Debiased"),
-  ineq = c("Gini", "MLD", c("Gini", "MLD")),
-  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "SL"),
-  ensemble = c("SL.Lasso", "SL.Ridge", "SL.RF", "SL.CIF", "SL.XGB", "SL.CB"),
+  est_method = "Debiased",
+  ML = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB", "Torch", "loglin", "NLLS_exp",
+    "OLSensemble", "SL"),
+  OLSensemble = c("Lasso", "Ridge", "RF", "CIF", "XGB", "CB"),
+  SL.library = c("SL.ranger", "SL.xgboost", "SL.glmnet"),
+  ensemblefolds = 5,
   sterr = TRUE,
   CFit = TRUE,
-  npart = 5,
-  IOp_rel = FALSE,
+  IOp_rel = TRUE,
   fitted_values = FALSE,
-  weights = NULL
+  weights = NULL,
+  rf.cf.ntree = 500,
+  rf.depth = 5,
+  cf.depth = 5,
+  polynomial.Lasso = 1,
+  polynomial.Ridge = 1,
+  polynomial.loglin = 1,
+  xgb.nrounds = 200,
+  xgb.max.depth = 6,
+  cb.iterations = 1000,
+  cb.depth = 6,
+  torch.epochs = 50,
+  torch.hidden_units = c(64, 32),
+  torch.lr = 0.01,
+  torch.dropout = 0.2,
+  mtry = max(floor(ncol(X)/3), 1),
+  polynomial.NLLS_exp = 1,
+  start_nlls = NULL,
+  FVs0 = NULL,
+  extFVs = NULL
 )
 }
 \arguments{
@@ -24,17 +44,24 @@ IOp(
 
 \item{X}{is a dataframe containing all the circumstances}
 
+\item{est_method}{is a string specifying which estimation method to use
+(Plugin or Debiased)}
+
 \item{ML}{is a string specifying which machine learner to use}
 
-\item{ensemble}{is a string vector specifying which learners
-should be used in the SuperLearner}
+\item{OLSensemble}{is a string vector specifying which learners should be
+used in OLS ensemble method}
+
+\item{SL.library}{is a string vector specifying which learners should be
+used in SuperLearner}
+
+\item{ensemblefolds}{how many folds to use in crossvalidation for ensemble
+methods (i.e. superlearner or OLSensemble)}
 
 \item{sterr}{logical indicating whether standard errors should be computed}
 
 \item{CFit}{logical indicating whether Cross-Fitting should be done in
 the debiased estimators (no inferential guarantee can be given yet if FALSE)}
-
-\item{npart}{in how many parts should the data be split for cross-fitting}
 
 \item{IOp_rel}{logical indicating whether relative IOp should be computed}
 
@@ -42,10 +69,63 @@ the debiased estimators (no inferential guarantee can be given yet if FALSE)}
 should be computed. This can be useful for computing partial effects later.}
 
 \item{weights}{survey weights adding up to 1}
+
+\item{rf.cf.ntree}{how many trees should be grown when using RF or CIF}
+
+\item{rf.depth}{how deep should trees be grown in RF (NULL is full depth,
+NULL in ranger)}
+
+\item{cf.depth}{how deep should trees be grown in CIF (Inf is full depth,
+as in partykit)}
+
+\item{polynomial.Lasso}{degree of polynomial to be fitted when using Lasso.
+1 just fits the input X. 2 squares all variables and adds
+all pairwise interactions. 3 squares and cubes all variables and adds all
+pairwise and threewise interactions...}
+
+\item{polynomial.Ridge}{degree of polynomial to be fitted when using Ridge,
+see polynomial.Lasso for more info.}
+
+\item{polynomial.loglin}{degree of polynomial to be fitted when using loglin,
+see polynomial.Lasso for more info.}
+
+\item{xgb.nrounds}{s an integer specifying how many rounds to use in XGB}
+
+\item{xgb.max.depth}{an integer specifying how deep trees should be grown in XGB}
+
+\item{cb.iterations}{an integer specifying how many iterations to use in CB}
+
+\item{cb.depth}{an integer specifying how deep trees should be grown in CB}
+
+\item{torch.epochs}{an integer specifying the number of epochs (full passes through the dataset)
+to use when training the Torch neural network.}
+
+\item{torch.hidden_units}{a numeric vector specifying the number of neurons in
+each hidden layer of the Torch neural network.}
+
+\item{torch.lr}{a numeric value specifying the learning rate to be used for the
+optimizer when training the Torch neural network.}
+
+\item{torch.dropout}{a numeric value between 0 and 1 specifying the dropout
+rate for regularization in the Torch neural network.}
+
+\item{mtry}{number of variables to consider at each split in RF or CIF}
+
+\item{ineq}{is a string specifying which inequality measure to use
+(Gini or MLD) or a vector of both}
+
+\item{polynomial.NLLS_ext}{degree of polynomial to be fitted when using
+NLLS_exp, see polynomial.Lasso for more info.
+@param start_nlls List with the starting values of the parameters.
+Default is log(mean(Y)) for the intercept and zero for all the rest.}
 }
 \value{
 list containing IOp estimates, RMSE of the first stage (for Debiased
-estimates), relative IOp (if desired) and fitted values (if desired)
+and DFit = TRUE, this are done with the triangles in the crossfitting), the fitted
+values FVs (in Debiased with CFit = TRUE this FVs are in-sample not crossfitted,
+the fitted values in each fold for the debiased crossfitted, the pairwise sign comparison
+with the true signs (only if true fitted values FVs0 are known, e.g. in simulations) and
+the coefficients of the OLSensemble if it is used.
 }
 \description{
 \code{IOp} estimates IOp in different ways. Plug in estimators are available
@@ -68,7 +148,6 @@ Y <- mad2019$Y
 iop_pi <- IOp(Y,
               X,
               est_method = "Plugin",
-              ineq = "Gini",
               ML = "RF",
               sterr = FALSE,
               IOp_rel = TRUE,
@@ -87,10 +166,6 @@ iop_deb <- IOp(Y,
 
 }
 \references{
-Escanciano, J. C., & Terschuur, J. R. (2022).
-Debiased Semiparametric U-Statistics: Machine Learning Inference
-on Inequality of Opportunity. arXiv preprint arXiv:2206.05235.
-
-Terschuur, J. (2022). Debiased Machine Learning Inequality
-of Opportunity in Europe. arXiv preprint arXiv:2212.02407.
+Escanciano, J. C., & Terschuur, J. R. (2023). Machine learning
+inference on inequality of opportunity. arXiv preprint arXiv:2206.05235.
 }
