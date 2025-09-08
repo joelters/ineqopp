@@ -345,7 +345,7 @@ IOD <- function(Y,
       } else{
         return(list(IOp = jt, RMSE1 = RMSE1,
                     FVsinfold = FVsinfold,
-                    sgns = sgns, ))
+                    sgns = sgns))
       }
     }
   }
