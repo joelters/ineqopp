@@ -81,6 +81,7 @@ IOPI <- function(Y,
     }
   } else{
     FVs <- iopi$FVs
+    rmse1 = sqrt(weighted.mean2(((Y - FVs)^2), weights = weights))
     iopi = iopi$IOp
     return(list(IOp = iopi, RMSE1 = rmse1, FVs = FVs))
   }
