@@ -42,9 +42,9 @@ iopB <- IOp(YB,XB,ML = ML,sterr = TRUE, IOp_rel = TRUE,
            est_method = "Debiased", fitted_values = TRUE, CFit = TRUE)
 
 iop_a <- iopA$IOp["IOp","IOp"]
-se_a <- iopA$IOp["se","Gini"]
-iop_b <- iopB$IOp["IOp","Gini"]
-se_b <- iopB$IOp["se","Gini"]
+se_a <- iopA$IOp["se","IOp"]
+iop_b <- iopB$IOp["IOp","IOp"]
+se_b <- iopB$IOp["se","IOp"]
 
 IOptest(iop_a, iop_b, se_a, se_b)
 

@@ -128,7 +128,7 @@ with the true signs (only if true fitted values FVs0 are known, e.g. in simulati
 the coefficients of the OLSensemble if it is used.
 }
 \description{
-\code{IOp} estimates IOp in different ways. Plug in estimators are available
+\code{IOp} estimates IOp by estimating the Gini of the fitted values in different ways. Plug in estimators are available
 where the fitted values are estimated
 by any machine learner among Lasso, Ridge,
 Random Forest, Conditional Inference Forest, Extreme Gradient
@@ -157,7 +157,6 @@ iop_deb <- IOp(Y,
                X,
                est_method = "Debiased",
                CFit = TRUE,
-               ineq = "Gini",
                ML = "RF",
                sterr = TRUE,
                IOp_rel = TRUE,
