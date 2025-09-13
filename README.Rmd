@@ -1,5 +1,5 @@
 The goal of ineqopp is to provide estimates and tests for Inequality of Opportunity (IOp)
-using several methods. Debiased IOp estimates can be computed using any Machine
+by estimating the Gini of the outcome predictions given circumstances. Debiased IOp estimates can be computed using any Machine
 Learner among: Lasso, Ridge, Random Forest, Conditional Inferest Forest, Extreme
 Gradient Boosting, Catboosting or some combination of these five machine learners.
 Plug in estimates can also be computed estimating the fitted values with a log
