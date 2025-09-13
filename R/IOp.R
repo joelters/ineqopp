@@ -1,6 +1,6 @@
 #' Estimate Inequality of Opportunity (IOp)
 #'
-#' `IOp` estimates IOp in different ways. Plug in estimators are available
+#' `IOp` estimates IOp by estimating the Gini of the fitted values in different ways. Plug in estimators are available
 #' where the fitted values are estimated
 #' by any machine learner among Lasso, Ridge,
 #' Random Forest, Conditional Inference Forest, Extreme Gradient
@@ -85,7 +85,6 @@
 #'                X,
 #'                est_method = "Debiased",
 #'                CFit = TRUE,
-#'                ineq = "Gini",
 #'                ML = "RF",
 #'                sterr = TRUE,
 #'                IOp_rel = TRUE,
