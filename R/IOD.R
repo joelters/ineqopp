@@ -203,8 +203,7 @@ IOD <- function(Y,
       FVs2 <- FVs2*(FVs2 > 0) + (FVs2 <= 0)
       if(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0) != 0){
         warning(paste(sum(m$FVs1 <= 0) + sum(m$FVs1 <= 0),
-                      "FVs were lower or equal than 0 and were
-                turned into the value 1."))
+                      "FVs are lower or equal than 0."))
       }
       #Triangle
       if(u %in% c(1,2)){
@@ -290,10 +289,8 @@ IOD <- function(Y,
         FVres = extFVs
       }
       if(sum(FVres <= 0) != 0){
-        warning(paste(sum(FVres <= 0),"FVs were lower or equal than 0 and were
-                      turned into the value 1."))
+        warning(paste(sum(FVres <= 0),"FVs are lower or equal than 0."))
       }
-      FVres <- FVres*(FVres > 0) + (FVres <= 0)
     }
     else if (fitted_values == FALSE & sterr == FALSE){
       FVres <- NULL

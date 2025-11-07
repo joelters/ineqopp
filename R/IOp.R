@@ -129,7 +129,7 @@ IOp <- function(Y,
                 start_nlls = NULL,
                 FVs0 = NULL,
                 extFVs = NULL){
-  if (sum(Y<0) != 0){stop("There are negative values for Y.")}
+  if (sum(Y<0) != 0){warning("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,
                X,

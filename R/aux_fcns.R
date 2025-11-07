@@ -297,8 +297,7 @@ mliop_pi <- function(X,
   }
 
   if(sum(FVs <= 0) != 0){
-    warning(paste(sum(FVs <= 0),"FVs were lower or equal than 0 and were
-                    turned into the value 1."))
+    warning(paste(sum(FVs <= 0),"FVs are lower or equal than 0."))
   }
   #Estimate plug in IOp
   iopi <- unlist(acid::weighted.gini(FVs, weights)[2])
