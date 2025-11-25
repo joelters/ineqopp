@@ -376,7 +376,7 @@ se_PI <- function(Y,FVs,iop, weights = NULL){
     S = 4*S*sum(wt2^2)
     B = 2*weighted.mean(Y,weights)
     V = (1/B^2)*S
-    se = sqrt(V)
+    se_naive = sqrt(V)
     return(data.frame(se = se, se_naive = se_naive))
   }
 }
