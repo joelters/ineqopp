@@ -245,7 +245,6 @@ mliop_pi <- function(X,
                   fitted_values = FALSE,
                   rf.cf.ntree = 500,
                   rf.depth = NULL,
-                  cf.depth = Inf,
                   mtry = max(floor(ncol(X)/3), 1),
                   polynomial.Lasso = 1,
                   polynomial.Ridge = 1,
@@ -261,7 +260,8 @@ mliop_pi <- function(X,
                   polynomial.NLLS_exp = 1,
                   start_nlls = NULL,
                   weights = NULL,
-                  extFVs = NULL){
+                  extFVs = NULL,
+                  ...){
   ML = match.arg(ML)
   #Estimate FVs
   if (is.null(extFVs)){
@@ -273,7 +273,6 @@ mliop_pi <- function(X,
                    ensemblefolds = ensemblefolds,
                    rf.cf.ntree = rf.cf.ntree,
                    rf.depth = rf.depth,
-                   cf.depth = cf.depth,
                    mtry = mtry,
                    polynomial.Lasso = polynomial.Lasso,
                    polynomial.Ridge = polynomial.Ridge,
@@ -289,7 +288,8 @@ mliop_pi <- function(X,
                    polynomial.NLLS_exp = polynomial.NLLS_exp,
                    start_nlls = start_nlls,
                    FVs = TRUE,
-                   weights = weights)
+                   weights = weights,
+                   ...)
     FVs <- m$FVs
   }
   if (!is.null(extFVs)){

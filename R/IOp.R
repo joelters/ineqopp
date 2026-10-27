@@ -30,12 +30,10 @@
 #' @param IOp_rel logical indicating whether relative IOp should be computed
 #' @param fitted_values a logical indicating whether (in sample) fitted values
 #' should be computed. This can be useful for computing partial effects later.
-#' @param weights survey weights adding up to 1
-#' @param rf.cf.ntree how many trees should be grown when using RF or CIF
+#' @param weights survey weights adding up to 1 (not CIF when training first stage)
+#' @param rf.cf.ntree how many trees should be grown when using RF (not CIF anymore)
 #' @param rf.depth how deep should trees be grown in RF (NULL is full depth,
 #' NULL in ranger)
-#' @param cf.depth how deep should trees be grown in CIF (Inf is full depth,
-#' as in partykit)
 #' @param polynomial.Lasso degree of polynomial to be fitted when using Lasso.
 #' 1 just fits the input X. 2 squares all variables and adds
 #' all pairwise interactions. 3 squares and cubes all variables and adds all
@@ -44,7 +42,7 @@
 #' see polynomial.Lasso for more info.
 #' @param polynomial.loglin degree of polynomial to be fitted when using loglin,
 #' see polynomial.Lasso for more info.
-#' @param mtry number of variables to consider at each split in RF or CIF
+#' @param mtry number of variables to consider at each split in RF (not CIF anymore)
 #' @param xgb.nrounds s an integer specifying how many rounds to use in XGB
 #' @param xgb.max.depth an integer specifying how deep trees should be grown in XGB
 #' @param cb.iterations an integer specifying how many iterations to use in CB
@@ -61,6 +59,9 @@
 #'  NLLS_exp, see polynomial.Lasso for more info.
 #'  @param start_nlls List with the starting values of the parameters.
 #'  Default is log(mean(Y)) for the intercept and zero for all the rest.
+#' @param ... Additional arguments passed to
+#'   \code{partykit::cforest()} when ML = "CIF".
+#'   Otherwise ignored.
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' and DFit = TRUE, this are done with the triangles in the crossfitting), the fitted
 #' values FVs (in Debiased with CFit = TRUE this FVs are in-sample not crossfitted,
@@ -112,7 +113,6 @@ IOp <- function(Y,
                 weights = NULL,
                 rf.cf.ntree = 500,
                 rf.depth = 5,
-                cf.depth = 5,
                 polynomial.Lasso = 1,
                 polynomial.Ridge = 1,
                 polynomial.loglin = 1,
@@ -128,7 +128,8 @@ IOp <- function(Y,
                 polynomial.NLLS_exp = 1,
                 start_nlls = NULL,
                 FVs0 = NULL,
-                extFVs = NULL){
+                extFVs = NULL,
+                ...){
   if (sum(Y<0) != 0){warning("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,
@@ -143,7 +144,6 @@ IOp <- function(Y,
                weights = weights,
                rf.cf.ntree = rf.cf.ntree,
                rf.depth = rf.depth,
-               cf.depth = cf.depth,
                polynomial.Lasso = polynomial.Lasso,
                polynomial.Ridge = polynomial.Ridge,
                polynomial.loglin = polynomial.loglin,
@@ -158,7 +158,8 @@ IOp <- function(Y,
                torch.dropout = torch.dropout,
                polynomial.NLLS_exp = polynomial.NLLS_exp,
                start_nlls = start_nlls,
-               extFVs = extFVs)
+               extFVs = extFVs,
+               ...)
   }
   else if (est_method == "Debiased"){
     io <- IOD(Y,
@@ -174,7 +175,6 @@ IOp <- function(Y,
               weights = weights,
               rf.cf.ntree = rf.cf.ntree,
               rf.depth = rf.depth,
-              cf.depth = cf.depth,
               polynomial.Lasso = polynomial.Lasso,
               polynomial.Ridge = polynomial.Ridge,
               polynomial.loglin = polynomial.loglin,
@@ -190,6 +190,7 @@ IOp <- function(Y,
               torch.lr = torch.lr,
               torch.dropout = torch.dropout,
               FVs0 = FVs0,
-              extFVs = extFVs)
+              extFVs = extFVs,
+              ...)
   }
 }

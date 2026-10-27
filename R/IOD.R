@@ -12,7 +12,6 @@ IOD <- function(Y,
                 fitted_values = FALSE,
                 rf.cf.ntree = 500,
                 rf.depth = NULL,
-                cf.depth = Inf,
                 polynomial.Lasso = 1,
                 polynomial.Ridge = 1,
                 polynomial.loglin = 1,
@@ -28,7 +27,8 @@ IOD <- function(Y,
                 polynomial.NLLS_exp = 1,
                 start_nlls = NULL,
                 FVs0 = NULL,
-                extFVs = NULL){
+                extFVs = NULL,
+                ...){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -46,7 +46,6 @@ IOD <- function(Y,
                    ensemblefolds = ensemblefolds,
                    rf.cf.ntree = rf.cf.ntree,
                    rf.depth = rf.depth,
-                   cf.depth = cf.depth,
                    mtry = mtry,
                    polynomial.Lasso = polynomial.Lasso,
                    polynomial.Ridge = polynomial.Ridge,
@@ -61,7 +60,8 @@ IOD <- function(Y,
                    torch.dropout = torch.dropout,
                    polynomial.NLLS_exp = polynomial.NLLS_exp,
                    FVs = TRUE,
-                   weights = weights)
+                   weights = weights,
+                   ...)
     model <- m$model
     FVs <- m$FVs
     }
@@ -135,7 +135,6 @@ IOD <- function(Y,
                      ensemblefolds = ensemblefolds,
                      rf.cf.ntree = rf.cf.ntree,
                      rf.depth = rf.depth,
-                     cf.depth = cf.depth,
                      polynomial.Lasso = polynomial.Lasso,
                      polynomial.Ridge = polynomial.Ridge,
                      polynomial.loglin = polynomial.loglin,
@@ -151,7 +150,8 @@ IOD <- function(Y,
                      polynomial.NLLS_exp = polynomial.NLLS_exp,
                      start_nlls = start_nlls,
                      FVs = FALSE,
-                     weights = aux$wt)
+                     weights = aux$wt,
+                     ...)
       if (ML != "OLSensemble"){
         model <- m$model
         coefs = NULL
@@ -265,7 +265,6 @@ IOD <- function(Y,
                        ensemblefolds = ensemblefolds,
                        rf.cf.ntree = rf.cf.ntree,
                        rf.depth = rf.depth,
-                       cf.depth = cf.depth,
                        polynomial.Lasso = polynomial.Lasso,
                        polynomial.Ridge = polynomial.Ridge,
                        polynomial.loglin = polynomial.loglin,
@@ -281,7 +280,8 @@ IOD <- function(Y,
                        polynomial.NLLS_exp = polynomial.NLLS_exp,
                        start_nlls = start_nlls,
                        FVs = TRUE,
-                       weights = weights)
+                       weights = weights,
+                       ...)
 
         FVres <- m$FVs
       }

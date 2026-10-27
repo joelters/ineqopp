@@ -11,7 +11,6 @@ IOPI <- function(Y,
                  weights = NULL,
                  rf.cf.ntree = 500,
                  rf.depth = NULL,
-                 cf.depth = Inf,
                  mtry = max(floor(ncol(X)/3), 1),
                  polynomial.Lasso = 1,
                  polynomial.Ridge = 1,
@@ -26,7 +25,8 @@ IOPI <- function(Y,
                  torch.dropout = 0.2,
                  polynomial.NLLS_exp = 1,
                  start_nlls = NULL,
-                 extFVs = NULL){
+                 extFVs = NULL,
+                 ...){
   if(!is.null(weights) & class(weights) != "numeric"){
     stop("Weights have to be numeric")
   }
@@ -41,7 +41,6 @@ IOPI <- function(Y,
                 weights = weights,
                 rf.cf.ntree = rf.cf.ntree,
                 rf.depth = rf.depth,
-                cf.depth = cf.depth,
                 mtry = mtry,
                 polynomial.Lasso = polynomial.Lasso,
                 polynomial.Ridge = polynomial.Ridge,
@@ -56,7 +55,8 @@ IOPI <- function(Y,
                 torch.dropout = torch.dropout,
                 polynomial.NLLS_exp = polynomial.NLLS_exp,
                 start_nlls = start_nlls,
-                extFVs = extFVs)
+                extFVs = extFVs,
+                ...)
     #Standard errors
   if(sterr == TRUE){
     warning("Neither se nor se_naive are valid standard errors in general settings
