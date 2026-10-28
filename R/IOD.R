@@ -114,8 +114,10 @@ IOD <- function(Y,
     df <- as.data.frame(cbind(cbind(Y = Y, wt = weights, FVs0 = FVs0),X))
     names(df)[1] = "Y"
     # reshufle data in case there is some order
-    df = df[sample(1:nn),]
-    rownames(df) = paste(1:nn)
+    perm <- sample.int(nn)
+
+    df <- df[perm, , drop = FALSE]
+    rownames(df) <- as.character(seq_len(nn))
     dfcf <- SP(df)
     dfcfi <- dfcf$dfcfi
     dfcfj <- dfcf$dfcfj
@@ -241,8 +243,10 @@ IOD <- function(Y,
       t$sgns
     })
 
-    FVsinfold = lapply(res, function(t){
-      t$FVsinfold
+    FVsinfold <- lapply(res, function(t) {
+      z <- t$FVsinfold
+      z$ind <- perm[as.integer(z$ind)]
+      z
     })
 
     #Compute denominator
@@ -285,6 +289,7 @@ IOD <- function(Y,
 
         FVres <- m$FVs
       }
+      
       if(!is.null(extFVs)){
         FVres = extFVs
       }
@@ -295,6 +300,35 @@ IOD <- function(Y,
     else if (fitted_values == FALSE & sterr == FALSE){
       FVres <- NULL
     }
+
+  if (fitted_values == TRUE) {
+
+    # Out-of-sample predictions from triangles 1 and 2
+    cf <- do.call(rbind, FVsinfold[1:2])
+
+    # Some observations appear in both triangles
+    # when n is not divisible by 4.
+    # Retain the first out-of-sample prediction.
+    cf <- cf[!duplicated(cf$ind), , drop = FALSE]
+
+    stopifnot(
+      nrow(cf) == nn,
+      setequal(cf$ind, seq_len(nn))
+    )
+
+    # Restore original observation order
+    FVs_oos <- rep(NA_real_, nn)
+    FVs_oos[cf$ind] <- cf$FVs
+
+    # Combine outcomes and both fitted-value estimates
+    FVsdf <- data.frame(
+      ind = seq_len(nn),
+      Y = Y,
+      FVs = FVs_oos,
+      FVsinsample = FVres
+    )
+  }
+
     #SE
     if (sterr == TRUE){
         se_gini <- se_deb(Y, FVres, iod_gini, weights = weights)
@@ -326,12 +360,14 @@ IOD <- function(Y,
         return(list(IOp = jt, RMSE1 = RMSE1,
                     FVs = FVres,
                     FVsinfold = FVsinfold,
+                    FVsdf = FVsdf,
                     coefs = coefs,
                     sgns = sgns))
       } else{
         return(list(IOp = jt, RMSE1 = RMSE1,
                     FVs = FVres,
                     FVsinfold = FVsinfold,
+                    FVsdf = FVsdf,
                     sgns = sgns))
       }
     } else{
