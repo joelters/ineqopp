@@ -61,7 +61,9 @@
 #'  Default is log(mean(Y)) for the intercept and zero for all the rest.
 #' @param ... Additional arguments passed to
 #'   \code{partykit::cforest()} when ML = "CIF".
-#'   Otherwise ignored.
+#'   Otherwise ignored. All arguments must be named, e.g. 
+#'   for CIF, tree controls must be specified using
+#'   control = partykit::ctree_control(...).
 #' @returns list containing IOp estimates, RMSE of the first stage (for Debiased
 #' and DFit = TRUE, this are done with the triangles in the crossfitting), the fitted
 #' values FVs (in Debiased with CFit = TRUE this FVs are in-sample not crossfitted,
@@ -130,6 +132,25 @@ IOp <- function(Y,
                 FVs0 = NULL,
                 extFVs = NULL,
                 ...){
+
+# Check that all arguments after Y and X are named
+args <- as.list(sys.call())[-1L]
+arg_names <- names(args)
+
+if (is.null(arg_names)) {
+  arg_names <- rep("", length(args))
+}
+
+unnamed <- which(is.na(arg_names) | arg_names == "")
+
+if (any(unnamed > 2L)) {
+  stop(
+    "All arguments after Y and X must be named. ",
+    "For example, use control = partykit::ctree_control(...).",
+    call. = FALSE
+  )
+}
+
   if (sum(Y<0) != 0){warning("There are negative values for Y.")}
   if (est_method == "Plugin"){
     io <- IOPI(Y,

@@ -12,21 +12,21 @@ X <- dplyr::select(mad2019,-Y)
                 X,
                 est_method = "Debiased",
                 CFit = TRUE,
-                ctree_control(mincriterion = 0.9, minbucket = 50),
+                control = partykit::ctree_control(mincriterion = 0.9, minbucket = 50),
                 ML = "CIF",
                 sterr = TRUE,
                 IOp_rel = TRUE,
                 fitted_values = TRUE)
 iop_deb$IOp
 fvsdf = iop_deb$FVsdf
-plot(fvsdf$FVs, fvsdf$Y, xlab = "Fitted Values", ylab = "Observed Values", main = "Fitted vs Observed Values")
-plot(fvsdf$FVsinsample, fvsdf$Y, xlab = "Fitted Values (In Sample)", ylab = "Observed Values", main = "Fitted vs Observed Values (In Sample)")
-plot(fvsdf$FVsinsample, fvsdf$FVs, xlab = "Fitted Values (In Fold)", ylab = "Fitted Values", main = "Fitted vs Fitted Values (In Fold)")
+# plot(fvsdf$FVs, fvsdf$Y, xlab = "Fitted Values", ylab = "Observed Values", main = "Fitted vs Observed Values")
+# plot(fvsdf$FVsinsample, fvsdf$Y, xlab = "Fitted Values (In Sample)", ylab = "Observed Values", main = "Fitted vs Observed Values (In Sample)")
+# plot(fvsdf$FVsinsample, fvsdf$FVs, xlab = "Fitted Values (In Fold)", ylab = "Fitted Values", main = "Fitted vs Fitted Values (In Fold)")
  iop_deb <- IOp(Y,
                 X,
                 est_method = "Debiased",
                 CFit = TRUE,
-                ctree_control(mincriterion = 0.9, minbucket = 50),
+                control = ctree_control(mincriterion = 0.9, minbucket = 50),
                 ML = "CIF",
                 sterr = TRUE,
                 IOp_rel = TRUE,
